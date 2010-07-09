@@ -55,6 +55,10 @@ $irc->termEcho('message');
 $irc->termEcho('message', 'color');
 
 // Bind a regex to a function, on either COMMAND (STDIN), IRC_IN, or IRC_OUT
-$irc->bind(COMMAND/IRC_IN/IRC_OUT, 'regex', function ($irc, $args, $line) {
+$irc->bind(COMMAND/IRC_IN/IRC_OUT, 'regex', function ($irc, $args, $line) {});
+
+// Bind a timer
+$irc->bind(TIMER, 60, function ($irc) {
+        // Runs every minute
 });
 ?>

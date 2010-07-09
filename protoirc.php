@@ -7,6 +7,7 @@
 define('COMMAND', 0);
 define('IRC_IN', 1);
 define('IRC_OUT', 2);
+define('TIMER', 3);
 
 class ProtoIRC {
         var $host, $port, $nick, $lastChannel, $socket, $handlers = array();
@@ -107,6 +108,8 @@ class ProtoIRC {
 	}
 
         function call($type, $data) {
+                if (!isset($this->handlers[$type])) return;
+
                 foreach ($this->handlers[$type] as $regex => $func) {
                         if (preg_match($regex, $data, $matches) == 1) {
                                 array_shift($matches);
@@ -117,7 +120,7 @@ class ProtoIRC {
         }
 
 	function go() {
-                $this->socket = @fsockopen($this->host, $this->port);
+                $this->socket = fsockopen($this->host, $this->port);
 
                 if (!$this->socket) return;
 
@@ -127,7 +130,7 @@ class ProtoIRC {
                 while(!feof($this->socket)) {
                         $r = array($this->socket, STDIN);
 
-                        if (stream_select($r, $w = null, $x = null, 60)) {
+                        if (stream_select($r, $w = null, $x = null, 1)) {
                                 foreach ($r as $stream) {
                                         $buffer = trim(fgets($stream, 1024), "\r\n");
 
@@ -136,6 +139,16 @@ class ProtoIRC {
                                         } else {
                                                 $this->call(IRC_IN, $buffer);
                                         }
+                                }
+                        }
+
+                        if (!isset($this->handlers[TIMER])) continue;
+
+                        $now = time();
+
+                        foreach ($this->handlers[TIMER] as $time => $func) {
+                                if (($now % $time) == 0) {
+                                        call_user_func($func, $this);
                                 }
                         }
                 }
