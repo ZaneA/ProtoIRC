@@ -57,6 +57,14 @@ $irc->termEcho('message', 'color');
 // Bind a regex to a function, on either COMMAND (STDIN), IRC_IN, or IRC_OUT
 $irc->bind(COMMAND/IRC_IN/IRC_OUT, 'regex', function ($irc, $first_match, $second_match etc) {
         // Runs if the regex matches
+
+        // Run stuff asynchronously
+        $irc->async(function ($irc) use ($first_match, $second_match) {
+                sleep(5);
+                $irc->send('#channel', 'This will print after 5 seconds');
+        });
+
+        $irc->send('#channel', 'This will print before the above statement');
 });
 
 // Bind a timer

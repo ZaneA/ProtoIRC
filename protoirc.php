@@ -118,6 +118,13 @@ class ProtoIRC {
 		}
 	}
 
+        function async($function) {
+                if (pcntl_fork() == 0) {
+                        call_user_func($function, $this);
+                        exit();
+                }
+        }
+
 	function bind($type, $regex, $function) {
 		if (is_callable($function)) {
 			$this->handlers[$type][$regex] = $function;
@@ -166,6 +173,9 @@ class ProtoIRC {
                                         }
                                 }
                         }
+
+                        // Clean up any waiting children
+                        pcntl_waitpid(-1, $status, WNOHANG);
 
                         if (!isset($this->handlers[TIMER])) continue;
 
