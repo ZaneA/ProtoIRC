@@ -33,9 +33,7 @@ $irc->bind(COMMAND, '/^\/exec (.*)/', function ($irc, $args) {
 
         exec($args, $output);
 
-        foreach ($output as $line) {
-                $irc->send($irc->lastChannel, $line);
-        }
+        $irc->send($irc->lastChannel, $output);
 });
 
 

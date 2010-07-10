@@ -69,17 +69,41 @@ class ProtoIRC {
 
                 case 2:
                 case 3:
-                        if (func_get_arg(0) == '' || func_get_arg(1) == '') {
+                        $dest = func_get_arg(0);
+                        $msg = func_get_arg(1);
+
+                        if (func_num_args() == 3) {
+                                $color = func_get_arg(2);
+                        } else {
+                                $color = false;
+                        }
+
+                        if (empty($dest) || empty($msg)) {
                                 return;
                         }
 
-                        if (func_num_args() == 3) {
-                                $data = 'PRIVMSG '.func_get_arg(0).' :'.$this->ircColor(func_get_arg(2)).func_get_arg(1).$this->ircColor();
-                        } else {
-                                $data = 'PRIVMSG '.func_get_arg(0).' :'.func_get_arg(1);
+                        // FIXME UGLY!
+                        // Print stuff containing newlines as expected..
+
+                        if (!is_array($msg) && strpos($msg, "\n") !== false) {
+                                $msg = explode("\n", $msg);
                         }
 
-                        $this->lastChannel = func_get_arg(0);
+                        if (is_array($msg)) {
+                                foreach ($msg as $line) {
+                                        $this->send($dest, $line, $color);
+                                }
+
+                                return;
+                        }
+
+                        if ($color) {
+                                $data = 'PRIVMSG '.$dest.' :'.$this->ircColor($color).$msg.$this->ircColor();
+                        } else {
+                                $data = 'PRIVMSG '.$dest.' :'.$msg;
+                        }
+
+                        $this->lastChannel = $dest;
                         break;
 
                 default:
