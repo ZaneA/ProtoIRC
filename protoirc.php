@@ -19,11 +19,11 @@ class ProtoIRC {
 
 
                 // Built in handlers for PING/PONG and Connect (376)
-                $this->bind(IRC_IN, '/^PING (.*)/', function ($irc, $args, $line) {
-                        $irc->send("PONG {$args[0]}");
+                $this->bind(IRC_IN, '/^PING (.*)/', function ($irc, $args) {
+                        $irc->send("PONG {$args}");
                 });
 
-                $this->bind(IRC_IN, '/^(.*) 376/', $conn_func);
+                $this->bind(IRC_IN, '/^.* 376/', $conn_func);
         }
 
 	function ircColor($color = 'default') {
@@ -113,8 +113,9 @@ class ProtoIRC {
                 foreach ($this->handlers[$type] as $regex => $func) {
                         if (preg_match($regex, $data, $matches) == 1) {
                                 array_shift($matches);
+                                array_unshift($matches, $this);
 
-                                return call_user_func($func, $this, $matches, $data);
+                                return call_user_func_array($func, $matches);
                         }
                 }
         }

@@ -14,14 +14,14 @@ A "Hello-World" (echo) example is as follows:
 <?php
 require('protoirc.php');
 
-$irc = new ProtoIRC('hostname', 6667, 'NickName', function ($irc, $args, $line) {
+$irc = new ProtoIRC('hostname', 6667, 'NickName', function ($irc) {
         // This code will run on connect
         $irc->send('JOIN #channel');
 });
 
-$irc->bind(IRC_IN, '/^:(.*)!~(.*) PRIVMSG (.*) :!echo (.*)/', function ($irc, $args, $line) {
-        // $args contains each regex match
-        $irc->send($args[2], $args[3], 'green');
+$irc->bind(IRC_IN, '/^:(.*)!~.* PRIVMSG (.*) :!echo (.*)/', function ($irc, $nick, $channel, $args) {
+        // Arguments are self-documenting
+        $irc->send($channel, "Echoing '{$args}' for you {$nick}", 'green');
 });
 
 while (true) {
@@ -37,7 +37,7 @@ Available API:
 It's probably easier just to look at protoirc.php, but here is the basic run down.
 
 <?php
-$irc = new ProtoIRC('hostname', port, 'nickname', function ($irc, $args, $line) {
+$irc = new ProtoIRC('hostname', port, 'nickname', function ($irc) {
         // Startup code
 });
 
@@ -55,7 +55,9 @@ $irc->termEcho('message');
 $irc->termEcho('message', 'color');
 
 // Bind a regex to a function, on either COMMAND (STDIN), IRC_IN, or IRC_OUT
-$irc->bind(COMMAND/IRC_IN/IRC_OUT, 'regex', function ($irc, $args, $line) {});
+$irc->bind(COMMAND/IRC_IN/IRC_OUT, 'regex', function ($irc, $first_match, $second_match etc) {
+        // Runs if the regex matches
+});
 
 // Bind a timer
 $irc->bind(TIMER, 60, function ($irc) {

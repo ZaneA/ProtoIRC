@@ -6,7 +6,7 @@
 
 $saved_handlers = array();
 
-$irc->bind(COMMAND, '/^\/(proto|new)/', function ($irc, $args, $line) {
+$irc->bind(COMMAND, '/^\/(proto|new)/', function ($irc, $cmd) {
         global $saved_handlers;
         $saved_handlers = $irc->handlers;
 
@@ -17,13 +17,13 @@ $irc->bind(COMMAND, '/^\/(proto|new)/', function ($irc, $args, $line) {
         $prototype = <<<'PROTO'
 #!/usr/bin/php
 <?php
-$irc->bind(COMMAND, '/^\/echo (.*)/', function ($irc, $args, $line) {
-        $irc->send($irc->lastChannel, $irc->ircColor('lt.blue').$args[0].$irc->ircColor());
-        $irc->termEcho("Echoing {$args[0]}\n", 'lt.red');
+$irc->bind(COMMAND, '/^\/echo (.*)/', function ($irc, $args) {
+        $irc->send($irc->lastChannel, $irc->ircColor('lt.blue').$args.$irc->ircColor());
+        $irc->termEcho("Echoing {$args}\n", 'lt.red');
 });
 
-$irc->bind(IRC_IN, '/^:(.*)!~(.*) PRIVMSG (.*) :(.*)/', function ($irc, $args, $line) {
-        $irc->send($args[2], $args[3]);
+$irc->bind(IRC_IN, '/^:(.*)!~.* PRIVMSG (.*) :!echo (.*)/', function ($irc, $nick, $channel, $args) {
+        $irc->send($channel, $args);
 });
 PROTO;
 
@@ -32,16 +32,16 @@ PROTO;
         pclose(popen('/bin/sh -c "$EDITOR '.$filename.' &"', 'r'));
 });
 
-$irc->bind(COMMAND, '/^\/save/', function ($irc, $args, $line) {
+$irc->bind(COMMAND, '/^\/save/', function ($irc) {
         global $saved_handlers;
         $saved_handlers = $irc->handlers;
 });
 
-$irc->bind(COMMAND, '/^\/(load|include) (.*)/', function ($irc, $args, $line) {
+$irc->bind(COMMAND, '/^\/(load|include) (.*)/', function ($irc, $cmd, $filename) {
         global $saved_handlers;
         $irc->handlers = $saved_handlers;
 
-        $filename = trim($args[1]);
+        $filename = trim($filename);
 
         // PHP lint to check the include file for correctness before loading it
         // Hopefully this will prevent the bot from bombing on errors
@@ -58,9 +58,9 @@ $irc->bind(COMMAND, '/^\/(load|include) (.*)/', function ($irc, $args, $line) {
         }
 });
 
-$irc->bind(COMMAND, '/^\/php (.*)/', function ($irc, $args, $line) {
-        if (@eval("return true; {$args[0]}")) {
-                eval($args[0]);
+$irc->bind(COMMAND, '/^\/php (.*)/', function ($irc, $code) {
+        if (@eval("return true; {$code}")) {
+                eval($code);
         } else {
                 $irc->termEcho("Error in eval'd code\n", 'lt.red');
         }
