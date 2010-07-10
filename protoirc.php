@@ -69,8 +69,7 @@ class ProtoIRC {
 
                 case 2:
                 case 3:
-                        if (func_get_arg(0) == '') {
-                                $this->termEcho("Missing a destination!\n", 'red', 1);
+                        if (func_get_arg(0) == '' || func_get_arg(1) == '') {
                                 return;
                         }
 
@@ -91,6 +90,7 @@ class ProtoIRC {
 
 		if ($this->socket) {
 			fwrite($this->socket, $data."\n\r");
+                        usleep(200000);
 		}
 	}
 
