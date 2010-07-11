@@ -4,11 +4,6 @@
 // Author: Zane Ashby
 //
 
-define('COMMAND', 0);
-define('IN', 1);
-define('OUT', 2);
-define('TIMER', 3);
-
 class ProtoIRC {
         var $host, $port, $nick, $lastChannel, $socket, $handlers = array();
 
@@ -17,13 +12,16 @@ class ProtoIRC {
 		$this->port = $port;
 		$this->nick = $nick;
 
-
-                // Built in handlers for PING/PONG and Connect (376)
+                // Built in handlers
                 $this->in('/^PING (.*)/', function ($irc, $args) {
                         $irc->send("PONG {$args}");
                 });
 
                 $this->in('/^.* 376/', $conn_func);
+
+                $this->out('/^JOIN (#.*)/', function ($irc, $channel) {
+                        $irc->lastChannel = $channel;
+                });
         }
 
 	function ircColor($color = 'default') {
@@ -110,7 +108,7 @@ class ProtoIRC {
                         return;
                 }
 
-                if ($this->call(OUT, $data)) return;
+                if ($this->call('out', $data)) return;
 
 		if ($this->socket) {
 			fwrite($this->socket, $data."\n\r");
@@ -142,8 +140,12 @@ class ProtoIRC {
 
         // Simple bind shortcut using overloading
         function __call($func, $args) {
-                array_unshift($args, constant(strtoupper($func)));
-                return call_user_func_array(array($this, 'bind'), $args);
+                if (substr($func, 0, 5) == 'call_') {
+                        $this->call(substr($func, 5), $args[0]);
+                } else {
+                        array_unshift($args, $func);
+                        return call_user_func_array(array($this, 'bind'), $args);
+                }
         }
 
         // Shortcut for send
@@ -180,9 +182,9 @@ class ProtoIRC {
                                         $buffer = trim(fgets($stream, 1024), "\r\n");
 
                                         if (stream_is_local($stream)) {
-                                                $this->call(COMMAND, $buffer);
+                                                $this->call('command', $buffer);
                                         } else {
-                                                $this->call(IN, $buffer);
+                                                $this->call('in', $buffer);
                                         }
                                 }
                         }
@@ -190,11 +192,11 @@ class ProtoIRC {
                         // Clean up any waiting children
                         pcntl_waitpid(-1, $status, WNOHANG);
 
-                        if (!isset($this->handlers[TIMER])) continue;
+                        if (!isset($this->handlers['timer'])) continue;
 
                         $now = time();
 
-                        foreach ($this->handlers[TIMER] as $time => $func) {
+                        foreach ($this->handlers['timer'] as $time => $func) {
                                 if (($now % $time) == 0) {
                                         call_user_func($func, $this);
                                 }
