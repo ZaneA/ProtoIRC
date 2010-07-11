@@ -5,8 +5,8 @@
 //
 
 define('COMMAND', 0);
-define('IRC_IN', 1);
-define('IRC_OUT', 2);
+define('IN', 1);
+define('OUT', 2);
 define('TIMER', 3);
 
 class ProtoIRC {
@@ -19,11 +19,11 @@ class ProtoIRC {
 
 
                 // Built in handlers for PING/PONG and Connect (376)
-                $this->bind(IRC_IN, '/^PING (.*)/', function ($irc, $args) {
+                $this->in('/^PING (.*)/', function ($irc, $args) {
                         $irc->send("PONG {$args}");
                 });
 
-                $this->bind(IRC_IN, '/^.* 376/', $conn_func);
+                $this->in('/^.* 376/', $conn_func);
         }
 
 	function ircColor($color = 'default') {
@@ -110,7 +110,7 @@ class ProtoIRC {
                         return;
                 }
 
-                if ($this->call(IRC_OUT, $data)) return;
+                if ($this->call(OUT, $data)) return;
 
 		if ($this->socket) {
 			fwrite($this->socket, $data."\n\r");
@@ -137,6 +137,12 @@ class ProtoIRC {
                         });
 		}
 	}
+
+        // Simple bind shortcut using overloading
+        function __call($func, $args) {
+                array_unshift($args, constant(strtoupper($func)));
+                return call_user_func_array(array($this, 'bind'), $args);
+        }
 
         function call($type, $data) {
                 if (!isset($this->handlers[$type])) return;
@@ -169,7 +175,7 @@ class ProtoIRC {
                                         if (stream_is_local($stream)) {
                                                 $this->call(COMMAND, $buffer);
                                         } else {
-                                                $this->call(IRC_IN, $buffer);
+                                                $this->call(IN, $buffer);
                                         }
                                 }
                         }

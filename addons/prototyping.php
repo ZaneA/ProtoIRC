@@ -6,7 +6,7 @@
 
 $saved_handlers = array();
 
-$irc->bind(COMMAND, '/^\/(proto|new)/', function ($irc, $cmd) {
+$irc->command('/^\/(proto|new)/', function ($irc, $cmd) {
         global $saved_handlers;
         $saved_handlers = $irc->handlers;
 
@@ -17,12 +17,12 @@ $irc->bind(COMMAND, '/^\/(proto|new)/', function ($irc, $cmd) {
         $prototype = <<<'PROTO'
 #!/usr/bin/php
 <?php
-$irc->bind(COMMAND, '/^\/echo (.*)/', function ($irc, $args) {
+$irc->command('/^\/echo (.*)/', function ($irc, $args) {
         $irc->send($irc->lastChannel, $irc->ircColor('lt.blue').$args.$irc->ircColor());
         $irc->termEcho("Echoing {$args}\n", 'lt.red');
 });
 
-$irc->bind(IRC_IN, '/^:(.*)!~.* PRIVMSG (.*) :!echo (.*)/', function ($irc, $nick, $channel, $args) {
+$irc->in('/^:(.*)!~.* PRIVMSG (.*) :!echo (.*)/', function ($irc, $nick, $channel, $args) {
         $irc->send($channel, $args);
 });
 PROTO;
@@ -32,12 +32,12 @@ PROTO;
         pclose(popen('/bin/sh -c "$EDITOR '.$filename.' &"', 'r'));
 });
 
-$irc->bind(COMMAND, '/^\/save/', function ($irc) {
+$irc->command('/^\/save/', function ($irc) {
         global $saved_handlers;
         $saved_handlers = $irc->handlers;
 });
 
-$irc->bind(COMMAND, '/^\/(load|include) (.*)/', function ($irc, $cmd, $filename) {
+$irc->command('/^\/(load|include) (.*)/', function ($irc, $cmd, $filename) {
         global $saved_handlers;
         $irc->handlers = $saved_handlers;
 
@@ -58,7 +58,7 @@ $irc->bind(COMMAND, '/^\/(load|include) (.*)/', function ($irc, $cmd, $filename)
         }
 });
 
-$irc->bind(COMMAND, '/^\/php (.*)/', function ($irc, $code) {
+$irc->command('/^\/php (.*)/', function ($irc, $code) {
         if (@eval("return true; {$code}")) {
                 eval($code);
         } else {

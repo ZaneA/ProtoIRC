@@ -1,6 +1,6 @@
 #!/usr/bin/php
 <?php
-$irc->bind(IRC_IN, '/^:(.*)!~.* PRIVMSG (.*) :!feed (.*)/', function ($irc, $nick, $channel, $feed) {
+$irc->in('/^:(.*)!~.* PRIVMSG (.*) :!feed (.*)/', function ($irc, $nick, $channel, $feed) {
         $irc->async(function ($irc) use ($channel, $feed) {
                 if (!file_exists('lastRSS.php')) {
                         $irc->send($channel, 'Please place lastRSS.php in the ProtoIRC directory to use', 'red');

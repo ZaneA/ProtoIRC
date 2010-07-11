@@ -19,19 +19,18 @@ $irc = new ProtoIRC('hostname', 6667, 'NickName', function ($irc) {
         $irc->send('JOIN #channel');
 });
 
-$irc->bind(IRC_IN, '/^:(.*)!~.* PRIVMSG (.*) :!echo (.*)/', function ($irc, $nick, $channel, $args) {
+$irc->in('/^:(.*)!~.* PRIVMSG (.*) :!echo (.*)/', function ($irc, $nick, $channel, $args) {
         // Arguments are self-documenting
         $irc->send($channel, "Echoing '{$args}' for you {$nick}", 'green');
 });
 
-while (true) {
-        // This will run once, until disconnected
-        $irc->go();
-}
+// This will run once, until disconnected
+$irc->go();
 ?>
 
 See client.php for a slightly more in depth example. Use the runclient.sh to run it using rlwrap.
 See addons/prototyping.php for an undocumented prototyping helper..
+See addons/feedreader.php for a short async demo..
 
 Available API:
 It's probably easier just to look at protoirc.php, but here is the basic run down.
@@ -54,8 +53,9 @@ $irc->send('#destination', 'message', 'color');
 $irc->termEcho('message');
 $irc->termEcho('message', 'color');
 
-// Bind a regex to a function, on either COMMAND (STDIN), IRC_IN, or IRC_OUT
-$irc->bind(COMMAND/IRC_IN/IRC_OUT, 'regex', function ($irc, $first_match, $second_match etc) {
+// Bind a regex to a function, on either COMMAND (STDIN), IN, or OUT
+// Or see below for bind shortcut
+$irc->bind(COMMAND/IN/OUT, 'regex', function ($irc, $first_match, $second_match etc) {
         // Runs if the regex matches
 
         // Run stuff asynchronously
@@ -71,4 +71,10 @@ $irc->bind(COMMAND/IRC_IN/IRC_OUT, 'regex', function ($irc, $first_match, $secon
 $irc->bind(TIMER, 60, function ($irc) {
         // Runs every minute
 });
+
+// Shortcuts for binding using class overloading
+$irc->command('regex', function ($irc, $first_match, $second_match etc) {});
+$irc->in('regex', function ($irc, $first_match, $second_match etc) {});
+$irc->out('regex', function ($irc, $first_match, $second_match etc) {});
+$irc->timer(60, function ($irc) {});
 ?>

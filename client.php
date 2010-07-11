@@ -22,13 +22,13 @@ foreach (glob('addons/*.php') as $addon) {
 
 
 // Send raw IRC data by typing "/quote SOME DATA TO SEND"
-$irc->bind(COMMAND, '/^\/(quote|raw) (.*)/', function ($irc, $command, $data) {
+$irc->command('/^\/(quote|raw) (.*)/', function ($irc, $command, $data) {
         $irc->send($data);
 });
 
 
 // Execute command by typing "/exec command" and send output to current channel
-$irc->bind(COMMAND, '/^\/exec (.*)/', function ($irc, $args) {
+$irc->command('/^\/exec (.*)/', function ($irc, $args) {
         $output = Array();
 
         exec($args, $output);
@@ -38,13 +38,13 @@ $irc->bind(COMMAND, '/^\/exec (.*)/', function ($irc, $args) {
 
 
 // Send to channel by typing "#channel, message"
-$irc->bind(COMMAND, '/^#(.*), (.*)/', function ($irc, $channel, $msg) {
+$irc->command('/^#(.*), (.*)/', function ($irc, $channel, $msg) {
         $irc->send("#{$channel}", $msg);
 });
 
 
 // Catch-all: Send to default channel
-$irc->bind(COMMAND, '/(.*)/', function ($irc, $msg) {
+$irc->command('/(.*)/', function ($irc, $msg) {
         if (empty($msg)) return;
 
         $irc->send($irc->lastChannel, $msg);
@@ -52,19 +52,19 @@ $irc->bind(COMMAND, '/(.*)/', function ($irc, $msg) {
 
 
 // Catch outgoing messages and print them
-$irc->bind(IRC_OUT, '/^PRIVMSG (.*) :(.*)/', function ($irc, $channel, $msg) {
+$irc->out('/^PRIVMSG (.*) :(.*)/', function ($irc, $channel, $msg) {
         $irc->termEcho("({$channel}.", 'lt.black').$irc->termEcho($irc->nick, 'lt.blue').$irc->termEcho(')> ', 'lt.black').$irc->termEcho("{$msg}\n", 'lt.white'); 
 });
 
 
 // Display the topic when joining a channel
-$irc->bind(IRC_IN, '/^:.* 332 .* (.*) :(.*)/', function ($irc, $channel, $topic) {
+$irc->in('/^:.* 332 .* (.*) :(.*)/', function ($irc, $channel, $topic) {
         $irc->termEcho("The topic of {$channel} is {$topic}\n", 'lt.brown');
 });
 
 
 // Someone is joining or parting
-$irc->bind(IRC_IN, '/^:(.*)!~.* (JOIN|PART) :?(.*)/', function ($irc, $nick, $cmd, $channel) {
+$irc->in('/^:(.*)!~.* (JOIN|PART) :?(.*)/', function ($irc, $nick, $cmd, $channel) {
         if ($cmd == 'JOIN') {
                 $irc->termEcho(">> {$nick} has joined {$channel}\n", 'lt.green');
         } else {
@@ -74,13 +74,13 @@ $irc->bind(IRC_IN, '/^:(.*)!~.* (JOIN|PART) :?(.*)/', function ($irc, $nick, $cm
 
 
 // Someone has messaged a channel or PM'd us, so print it
-$irc->bind(IRC_IN, '/^:(.*)!~.* PRIVMSG (.*) :(.*)/', function ($irc, $nick, $channel, $msg) {
+$irc->in('/^:(.*)!~.* PRIVMSG (.*) :(.*)/', function ($irc, $nick, $channel, $msg) {
         $irc->termEcho("({$channel}.", 'lt.black').$irc->termEcho($nick, 'blue').$irc->termEcho(')> ', 'lt.black').$irc->termEcho("{$msg}\n", 'lt.white'); 
 });
 
 
 // Catch-all: Print raw line to terminal for debugging/hacking
-$irc->bind(IRC_IN, '/(.*)/', function ($irc, $line) {
+$irc->in('/(.*)/', function ($irc, $line) {
         $irc->termEcho("<< {$line}\n", 'lt.black');
 });
 
