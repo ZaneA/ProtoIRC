@@ -5,56 +5,70 @@
 //
 
 $saved_handlers = array();
+$filename = '';
 
 $irc->command('/^\/(proto|new)/', function ($irc, $cmd) {
-        global $saved_handlers;
-        $saved_handlers = $irc->handlers;
+        global $filename, $saved_handlers;
 
-        $filename = tempnam('.', 'proto');
+        $filename = tempnam('/tmp', 'proto');
 
         // Below is some example code that will be written to the file
         // before it is opened in your editor
         $prototype = <<<'PROTO'
 #!/usr/bin/php
 <?php
-$irc->command('/^\/echo (.*)/', function ($irc, $args) {
-        $irc->send($irc->lastChannel, $irc->ircColor('lt.blue').$args.$irc->ircColor());
-        $irc->termEcho("Echoing {$args}\n", 'lt.red');
-});
-
 $irc->in('/^:(.*)!~.* PRIVMSG (.*) :!echo (.*)/', function ($irc, $nick, $channel, $args) {
-        $irc->send($channel, $args);
+        $irc->send($channel, "Echoing {$args} for you, {$nick}", 'yellow');
 });
 PROTO;
 
         file_put_contents($filename, $prototype);
 
         pclose(popen('/bin/sh -c "$EDITOR '.$filename.' &"', 'r'));
-});
 
-$irc->command('/^\/save/', function ($irc) {
-        global $saved_handlers;
+        $filem = filemtime($filename);
+
+        $irc->timer(5, function ($irc) use (&$filem) {
+                global $filename, $saved_handlers;
+
+                clearstatcache(true, $filename);
+
+                if (filemtime($filename) != $filem) {
+                        $filem = filemtime($filename);
+
+                        $irc->handlers = $saved_handlers;
+
+                        // PHP lint to check the include file for correctness before loading it
+                        // Hopefully this will prevent the bot from bombing on errors
+                        exec("php -l {$filename}", $output = array(), $returncode);
+
+                        if ($returncode == 0) {
+                                ob_start();
+
+                                include($filename);
+
+                                ob_end_clean();
+                                $irc->termEcho("Reloaded {$filename}\n", 'lt.green');
+                        } else {
+                                $irc->termEcho("Errors were found in {$filename}\n", 'lt.red');
+                        }
+                }
+        });
+
         $saved_handlers = $irc->handlers;
 });
 
-$irc->command('/^\/(load|include) (.*)/', function ($irc, $cmd, $filename) {
-        global $saved_handlers;
-        $irc->handlers = $saved_handlers;
+$irc->command('/^\/save (.*)/', function ($irc, $newfilename) {
+        global $filename;
 
-        $filename = trim($filename);
+        if (!empty($filename)) {
+                $irc->timer(5, null); // Clear the timer
 
-        // PHP lint to check the include file for correctness before loading it
-        // Hopefully this will prevent the bot from bombing on errors
-        exec("php -l {$filename}", $output = array(), $returncode);
+                rename($filename, 'addons/'.$newfilename.'.php');
 
-        if ($returncode == 0) {
-                ob_start();
+                $irc->termEcho("Moved {$filename} to addons/{$newfilename}.php\n", 'lt.green');
 
-                include($filename);
-
-                ob_end_clean();
-        } else {
-                $irc->termEcho("Errors were found in {$filename}\n", 'lt.red');
+                $filename = '';
         }
 });
 

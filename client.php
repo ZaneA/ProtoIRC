@@ -37,9 +37,9 @@ $irc->command('/^\/exec (.*)/', function ($irc, $args) {
 });
 
 
-// Send to channel by typing "#channel, message"
-$irc->command('/^#(.*), (.*)/', function ($irc, $channel, $msg) {
-        $irc->send("#{$channel}", $msg);
+// Send to person/channel by typing "#channel, message"
+$irc->command('/^(#?.*), (.*)/', function ($irc, $channel, $msg) {
+        $irc->send("{$channel}", $msg);
 });
 
 

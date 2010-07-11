@@ -46,7 +46,7 @@ class ProtoIRC {
                         $bold = 0;
                 }
 
-                $colors = Array('black', 'red', 'green', 'brown', 'blue', 'purple', 'cyan', 'white');
+                $colors = Array('black', 'red', 'green', 'yellow', 'blue', 'purple', 'cyan', 'white');
 
                 $color = array_search($color, $colors);
 
@@ -135,7 +135,9 @@ class ProtoIRC {
                         uksort($this->handlers[$type], function ($a, $b) {
                                 return (strlen($b) - strlen($a));
                         });
-		}
+                } else {
+                        unset($this->handlers[$type][$regex]);
+                }
 	}
 
         // Simple bind shortcut using overloading
