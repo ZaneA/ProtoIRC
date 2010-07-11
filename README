@@ -77,4 +77,7 @@ $irc->command('regex', function ($irc, $first_match, $second_match etc) {});
 $irc->in('regex', function ($irc, $first_match, $second_match etc) {});
 $irc->out('regex', function ($irc, $first_match, $second_match etc) {});
 $irc->timer(60, function ($irc) {});
+
+// Shortcut for send function..
+$irc('#channel', 'Message');
 ?>

@@ -146,6 +146,11 @@ class ProtoIRC {
                 return call_user_func_array(array($this, 'bind'), $args);
         }
 
+        // Shortcut for send
+        function __invoke() {
+                return call_user_func_array(array($this, 'send'), func_get_args());
+        }
+
         function call($type, $data) {
                 if (!isset($this->handlers[$type])) return;
 
