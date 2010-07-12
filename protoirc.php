@@ -147,17 +147,12 @@ class ProtoIRC {
 
         // Simple bind shortcut using overloading
         function __call($func, $args) {
-                if (substr($func, 0, 4) == 'call') {
-                        $this->call(strtolower(substr($func, 4)), $args[0]);
+                if (sizeof($args) == 1) {
+                        $this->call($func, $args[0]);
                 } else {
                         array_unshift($args, $func);
                         return call_user_func_array(array($this, 'bind'), $args);
                 }
-        }
-
-        // Shortcut for send
-        function __invoke() {
-                return call_user_func_array(array($this, 'send'), func_get_args());
         }
 
         function call($type, $data) {
