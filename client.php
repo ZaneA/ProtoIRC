@@ -9,9 +9,8 @@ require 'protoirc.php';
 
 // Create IRC Class
 $irc = new ProtoIRC('10.1.1.9', 6667, 'ProtoBot', function ($irc) {
-        // Connected, so join our channel
- 
         $irc->send('JOIN #Bottest');
+        $irc->send('NOTICE #Bottest :Hey there!');
 });
 
 
@@ -36,7 +35,7 @@ $irc->command('/^\/exec (.*)/', function ($irc, $args) {
 
 
 // Send to channel by typing "#channel, message"
-$irc->command('/^(#.*), (.*)/', function ($irc, $channel, $msg) {
+$irc->command('/^([#\-[:alnum:]]*), (.*)/', function ($irc, $channel, $msg) {
         $irc->send("{$channel}", $msg);
 });
 

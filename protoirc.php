@@ -13,15 +13,25 @@ class ProtoIRC {
 		$this->nick = $nick;
 
                 // Built in handlers
+                $this->in('/^.* (?:422|376)/', $conn_func);
+
                 $this->in('/^PING (.*)(?#builtin)/', function ($irc, $args) {
                         $irc->send("PONG {$args}");
                         return true;
                 });
 
-                $this->in('/^.* (?:422|376)/', $conn_func);
+                $this->in('/^:(.*)!~.* PRIVMSG (.*) :(?#builtin)/', function ($irc, $nick, $dest) {
+                        $irc->last = ($dest == $irc->nick) ? $nick : $dest;
+                        return true;
+                });
 
-                $this->out('/^JOIN (#.*)(?#builtin)/', function ($irc, $channel) {
-                        $irc->last = $channel;
+                $this->out('/^(?:JOIN) (#.*)(?#builtin)/', function ($irc, $dest) {
+                        $irc->last = $dest;
+                        return true;
+                });
+
+                $this->out('/^(?:PRIVMSG) (.*) :(?#builtin)/', function ($irc, $dest) {
+                        $irc->last = $dest;
                         return true;
                 });
 
@@ -103,8 +113,6 @@ class ProtoIRC {
                         } else {
                                 $data = 'PRIVMSG '.$dest.' :'.$msg;
                         }
-
-                        $this->last = $dest;
                         break;
 
                 default:
