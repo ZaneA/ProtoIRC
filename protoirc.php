@@ -13,7 +13,7 @@ class ProtoIRC {
 		$this->nick = $nick;
 
                 // Built in handlers
-                $this->in('/^.* (?:422|376)/', $conn_func);
+                $this->in('/^.* (?:422|376)(?#builtin)/', $conn_func);
 
                 $this->in('/^PING (.*)(?#builtin)/', function ($irc, $args) {
                         $irc->send("PONG {$args}");
@@ -42,10 +42,10 @@ class ProtoIRC {
         }
 
 	function ircColor($color = 'default') {
-		$colors = array('white', 'black', 'blue', 'green', 'red', 'brown', 'purple', 'orange', 'yellow', 'lt.green', 'teal', 'lt.cyan', 'lt.blue', 'pink', 'grey', 'lt.grey');
+		$colors = array('lt.white', 'black', 'blue', 'green', 'lt.red', 'red', 'purple', 'yellow', 'lt.yellow', 'lt.green', 'cyan', 'lt.cyan', 'lt.blue', 'lt.purple', 'lt.black', 'white');
 
 		if (($color = array_search($color, $colors)) !== false) {
-			return chr(0x03).$color;
+			return chr(0x03).sprintf('%02s', $color);
 		} else {
 			return chr(0x03);
 		}
@@ -83,15 +83,16 @@ class ProtoIRC {
                         $dest = func_get_arg(0);
                         $msg = func_get_arg(1);
 
+                        if (empty($dest) || empty($msg)) {
+                                return;
+                        }
+
                         if (func_num_args() == 3) {
                                 $color = func_get_arg(2);
                         } else {
                                 $color = false;
                         }
 
-                        if (empty($dest) || empty($msg)) {
-                                return;
-                        }
 
                         // FIXME UGLY!
                         // Print stuff containing newlines as expected..
@@ -122,7 +123,7 @@ class ProtoIRC {
                 if ($this->call('out', $data) === false) return;
 
 		if ($this->socket) {
-			fwrite($this->socket, $data."\n\r");
+			fwrite($this->socket, "{$data}\r\n");
                         usleep(200000);
 		}
 	}
