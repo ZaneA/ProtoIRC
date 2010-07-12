@@ -5,7 +5,7 @@
 //
 
 class ProtoIRC {
-        var $host, $port, $nick, $lastChannel, $socket, $handlers = array();
+        var $host, $port, $nick, $last, $socket, $handlers = array();
 
 	function ProtoIRC($host, $port, $nick, $conn_func) {
 		$this->host = $host;
@@ -13,14 +13,21 @@ class ProtoIRC {
 		$this->nick = $nick;
 
                 // Built in handlers
-                $this->in('/^PING (.*)/', function ($irc, $args) {
+                $this->in('/^PING (.*)(?#builtin)/', function ($irc, $args) {
                         $irc->send("PONG {$args}");
+                        return true;
                 });
 
-                $this->in('/^.* 376/', $conn_func);
+                $this->in('/^.* (?:422|376)/', $conn_func);
 
-                $this->out('/^JOIN (#.*)/', function ($irc, $channel) {
-                        $irc->lastChannel = $channel;
+                $this->out('/^JOIN (#.*)(?#builtin)/', function ($irc, $channel) {
+                        $irc->last = $channel;
+                        return true;
+                });
+
+                $this->out('/^NICK (.*)(?#builtin)/', function ($irc, $nick) {
+                        $irc->nick = $nick;
+                        return true;
                 });
         }
 
@@ -101,14 +108,14 @@ class ProtoIRC {
                                 $data = 'PRIVMSG '.$dest.' :'.$msg;
                         }
 
-                        $this->lastChannel = $dest;
+                        $this->last = $dest;
                         break;
 
                 default:
                         return;
                 }
 
-                if ($this->call('out', $data)) return;
+                if ($this->call('out', $data) === false) return;
 
 		if ($this->socket) {
 			fwrite($this->socket, $data."\n\r");
@@ -140,8 +147,8 @@ class ProtoIRC {
 
         // Simple bind shortcut using overloading
         function __call($func, $args) {
-                if (substr($func, 0, 5) == 'call_') {
-                        $this->call(substr($func, 5), $args[0]);
+                if (substr($func, 0, 4) == 'call') {
+                        $this->call(strtolower(substr($func, 4)), $args[0]);
                 } else {
                         array_unshift($args, $func);
                         return call_user_func_array(array($this, 'bind'), $args);
@@ -161,7 +168,9 @@ class ProtoIRC {
                                 array_shift($matches);
                                 array_unshift($matches, $this);
 
-                                return call_user_func_array($func, $matches);
+                                $r = call_user_func_array($func, $matches);
+                                if ($r === true) continue;
+                                return $r;
                         }
                 }
         }

@@ -1,6 +1,6 @@
 ProtoIRC
 
-Rapid IRC client/bot prototyping for PHP
+Rapid IRC client/bot prototyping for PHP >= 5.3
 
 Author: Zane Ashby
 Web: http://github.com/ZaneA/ProtoIRC
@@ -42,20 +42,24 @@ $irc = new ProtoIRC('hostname', port, 'nickname', function ($irc) {
 
 // Useful variables
 $irc->nick;
-$irc->lastChannel;
+$irc->last; // Last message destination
 
 // Send a message through the IRC connection
 $irc->send('RAW MESSAGE');
 $irc->send('#destination', 'message');
 $irc->send('#destination', 'message', 'color');
 
+// Or use the shortcut...
+$irc('RAW MESSAGE');
+$irc('#destination', 'message');
+$irc('#destination', 'message', 'color');
+
 // Echo to the terminal
 $irc->termEcho('message');
 $irc->termEcho('message', 'color');
 
 // Bind a regex to a function, on either COMMAND (STDIN), IN, or OUT
-// Or see below for bind shortcut
-$irc->bind(COMMAND/IN/OUT, 'regex', function ($irc, $first_match, $second_match etc) {
+$irc->bind('command/in/out', 'regex', function ($irc, $first_match, $second_match etc) {
         // Runs if the regex matches
 
         // Run stuff asynchronously
@@ -65,19 +69,30 @@ $irc->bind(COMMAND/IN/OUT, 'regex', function ($irc, $first_match, $second_match 
         });
 
         $irc->send('#channel', 'This will print before the above statement');
+
+        // return true if callbacks should continue to be called
+        // return false in 'out' callback to stop message being sent
 });
 
-// Bind a timer
-$irc->bind(TIMER, 60, function ($irc) {
-        // Runs every minute
-});
-
-// Shortcuts for binding using class overloading
+// Or use the shortcuts...
 $irc->command('regex', function ($irc, $first_match, $second_match etc) {});
 $irc->in('regex', function ($irc, $first_match, $second_match etc) {});
 $irc->out('regex', function ($irc, $first_match, $second_match etc) {});
+
+// Bind a timer
+$irc->bind('timer', 60, function ($irc) {
+        // Runs every minute
+});
+
+// Shortcut...
 $irc->timer(60, function ($irc) {});
 
-// Shortcut for send function..
-$irc('#channel', 'Message');
-?>
+// User defined callbacks
+$irc->in('/^:(.*)!~.* PRIVMSG (.*) :!(.*)/', function ($irc, $nick, $channel, $args) {
+        $irc->callMsg($args); // Shortcut for $irc->call('msg', $args);
+});
+
+// Shortcut for $irc->bind('msg', etc
+$irc->msg('/^echo (.*)/', function ($irc, $args) {
+        $irc($irc->last, $args);
+});

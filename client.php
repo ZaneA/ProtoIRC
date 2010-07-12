@@ -4,7 +4,7 @@
 // Author: Zane Ashby
 //
 
-require('protoirc.php');
+require 'protoirc.php';
 
 
 // Create IRC Class
@@ -29,11 +29,9 @@ $irc->command('/^\/(quote|raw) (.*)/', function ($irc, $command, $data) {
 
 // Execute command by typing "/exec command" and send output to current channel
 $irc->command('/^\/exec (.*)/', function ($irc, $args) {
-        $output = Array();
-
         exec($args, $output);
 
-        $irc->send($irc->lastChannel, $output);
+        $irc->send($irc->last, $output);
 });
 
 
@@ -45,9 +43,7 @@ $irc->command('/^(#.*), (.*)/', function ($irc, $channel, $msg) {
 
 // Catch-all: Send to default channel
 $irc->command('/(.*)/', function ($irc, $msg) {
-        if (empty($msg)) return;
-
-        $irc->send($irc->lastChannel, $msg);
+        $irc->send($irc->last, $msg);
 });
 
 
