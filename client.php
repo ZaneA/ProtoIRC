@@ -82,8 +82,5 @@ $irc->in('/(.*)/', function ($irc, $line) {
 
 
 // Everything is bound, so lets go!
-// In a while loop, so reconnect if we die
-while (true) {
-        $irc->go();
-}
+$irc->go();
 ?>

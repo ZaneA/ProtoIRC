@@ -32,11 +32,9 @@ class ProtoIRC {
         }
 
 	function ircColor($color = 'default') {
-		$colors = Array('white', 'black', 'blue', 'green', 'red', 'brown', 'purple', 'orange', 'yellow', 'lt.green', 'teal', 'lt.cyan', 'lt.blue', 'pink', 'grey', 'lt.grey');
+		$colors = array('white', 'black', 'blue', 'green', 'red', 'brown', 'purple', 'orange', 'yellow', 'lt.green', 'teal', 'lt.cyan', 'lt.blue', 'pink', 'grey', 'lt.grey');
 
-		$color = array_search($color, $colors);
-
-		if ($color !== false) {
+		if (($color = array_search($color, $colors)) !== false) {
 			return chr(0x03).$color;
 		} else {
 			return chr(0x03);
@@ -51,11 +49,9 @@ class ProtoIRC {
                         $bold = 0;
                 }
 
-                $colors = Array('black', 'red', 'green', 'yellow', 'blue', 'purple', 'cyan', 'white');
+                $colors = array('black', 'red', 'green', 'yellow', 'blue', 'purple', 'cyan', 'white');
 
-                $color = array_search($color, $colors);
-
-                if ($color !== false) {
+                if (($color = array_search($color, $colors)) !== false) {
                         return "\033[{$bold};".(30 + $color)."m";
                 } else {
                         return "\033[0m";
@@ -171,40 +167,47 @@ class ProtoIRC {
         }
 
 	function go() {
-                $this->socket = fsockopen($this->host, $this->port);
+                while (true) {
+                        $this->socket = fsockopen($this->host, $this->port);
 
-                if (!$this->socket) return;
+                        if (!$this->socket) {
+                                sleep(60); // Retry after a minute
+                                break;
+                        }
 
-                $this->send("NICK {$this->nick}");
-                $this->send("USER {$this->nick} * * :{$this->nick}");
+                        $this->send("NICK {$this->nick}");
+                        $this->send("USER {$this->nick} * * :{$this->nick}");
 
-                while(!feof($this->socket)) {
-                        $r = array($this->socket, STDIN);
+                        do {
+                                $r = array($this->socket, STDIN);
 
-                        if (stream_select($r, $w = null, $x = null, 1)) {
-                                foreach ($r as $stream) {
-                                        $buffer = trim(fgets($stream, 1024), "\r\n");
+                                if (stream_select($r, $w = null, $x = null, 1)) {
+                                        foreach ($r as $stream) {
+                                                $buffer = trim(fgets($stream, 1024), "\r\n");
 
-                                        if (stream_is_local($stream)) {
-                                                $this->call('command', $buffer);
-                                        } else {
-                                                $this->call('in', $buffer);
+                                                if (stream_is_local($stream)) {
+                                                        $this->call('command', $buffer);
+                                                } else {
+                                                        $this->call('in', $buffer);
+                                                }
                                         }
                                 }
-                        }
 
-                        // Clean up any waiting children
-                        pcntl_waitpid(-1, $status, WNOHANG);
+                                // Clean up any waiting children
+                                pcntl_waitpid(-1, $status, WNOHANG);
 
-                        if (!isset($this->handlers['timer'])) continue;
+                                if (!isset($this->handlers['timer'])) continue;
 
-                        $now = time();
+                                $now = time();
 
-                        foreach ($this->handlers['timer'] as $time => $func) {
-                                if (($now % $time) == 0) {
-                                        call_user_func($func, $this);
+                                foreach ($this->handlers['timer'] as $time => $func) {
+                                        if (($now % $time) == 0) {
+                                                call_user_func($func, $this);
+                                        }
                                 }
-                        }
+                        } while (!feof($this->socket));
+
+                        sleep(30); // Reconnect after half a minute
                 }
-	}
+        }
 }

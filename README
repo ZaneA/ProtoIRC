@@ -24,7 +24,6 @@ $irc->in('/^:(.*)!~.* PRIVMSG (.*) :!echo (.*)/', function ($irc, $nick, $channe
         $irc->send($channel, "Echoing '{$args}' for you {$nick}", 'green');
 });
 
-// This will run once, until disconnected
 $irc->go();
 ?>
 
