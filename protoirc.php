@@ -152,8 +152,9 @@ class ProtoIRC {
 
         // Simple bind shortcut using overloading
         function __call($func, $args) {
-                if (sizeof($args) == 1) {
-                        $this->call($func, $args[0]);
+                if (sizeof($args) == 1 || !is_callable($args[1])) {
+                        array_unshift($args, $func);
+                        return call_user_func_array(array($this, 'call'), $args);
                 } else {
                         array_unshift($args, $func);
                         return call_user_func_array(array($this, 'bind'), $args);
@@ -166,6 +167,12 @@ class ProtoIRC {
                 foreach ($this->handlers[$type] as $regex => $func) {
                         if (preg_match($regex, $data, $matches) == 1) {
                                 array_shift($matches);
+
+                                // Add additional arguments
+                                for ($i = func_num_args() - 1; $i > 1; $i--) {
+                                        array_unshift($matches, func_get_arg($i));
+                                }
+
                                 array_unshift($matches, $this);
 
                                 $r = call_user_func_array($func, $matches);
