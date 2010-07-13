@@ -5,7 +5,7 @@
 //
 
 class ProtoIRC {
-        var $host, $port, $nick, $last, $socket, $handlers = array();
+        var $host, $port, $nick, $last, $socket, $handlers = array(), $bhandlers = array('command');
 
 	function ProtoIRC($host, $port, $nick, $conn_func) {
 		$this->host = $host;
@@ -13,31 +13,26 @@ class ProtoIRC {
 		$this->nick = $nick;
 
                 // Built in handlers
-                $this->in('/^.* (?:422|376)(?#builtin)/', $conn_func);
+                $this->in('/^.* (?:422|376)/', $conn_func);
 
-                $this->in('/^PING (.*)(?#builtin)/', function ($irc, $args) {
+                $this->in('/^PING (.*)/', function ($irc, $args) {
                         $irc->send("PONG {$args}");
-                        return true;
                 });
 
-                $this->in('/^:(.*)!~.* PRIVMSG (.*) :(?#builtin)/', function ($irc, $nick, $dest) {
+                $this->in('/^:(.*)!~.* PRIVMSG (.*) :/', function ($irc, $nick, $dest) {
                         $irc->last = ($dest == $irc->nick) ? $nick : $dest;
-                        return true;
                 });
 
-                $this->out('/^(?:JOIN) (#.*)(?#builtin)/', function ($irc, $dest) {
+                $this->out('/^(?:JOIN) (#.*)/', function ($irc, $dest) {
                         $irc->last = $dest;
-                        return true;
                 });
 
-                $this->out('/^(?:PRIVMSG) (.*) :(?#builtin)/', function ($irc, $dest) {
+                $this->out('/^(?:PRIVMSG) (.*) :/', function ($irc, $dest) {
                         $irc->last = $dest;
-                        return true;
                 });
 
-                $this->out('/^NICK (.*)(?#builtin)/', function ($irc, $nick) {
+                $this->out('/^NICK (.*)/', function ($irc, $nick) {
                         $irc->nick = $nick;
-                        return true;
                 });
         }
 
@@ -137,7 +132,7 @@ class ProtoIRC {
 
 	function bind($type, $regex, $function) {
 		if (is_callable($function)) {
-			$this->handlers[$type][$regex] = $function;
+			$this->handlers[$type][$regex][] = $function;
 
                         // Sort by regex length, rough approximation of regex
                         // "wideness", since we want catch-all's to come last.
@@ -145,14 +140,16 @@ class ProtoIRC {
                         uksort($this->handlers[$type], function ($a, $b) {
                                 return (strlen($b) - strlen($a));
                         });
+
+                        return count($this->handlers[$type][$regex]) - 1; // Key
                 } else {
-                        unset($this->handlers[$type][$regex]);
+                        unset($this->handlers[$type][$regex][$function]);
                 }
 	}
 
         // Simple bind shortcut using overloading
         function __call($func, $args) {
-                if (sizeof($args) == 1 || !is_callable($args[1])) {
+                if (sizeof($args) == 1 || (!is_callable($args[1]) && !is_numeric($args[1]))) {
                         array_unshift($args, $func);
                         return call_user_func_array(array($this, 'call'), $args);
                 } else {
@@ -164,20 +161,22 @@ class ProtoIRC {
         function call($type, $data) {
                 if (!isset($this->handlers[$type])) return;
 
-                foreach ($this->handlers[$type] as $regex => $func) {
+                foreach ($this->handlers[$type] as $regex => $handlers) {
                         if (preg_match($regex, $data, $matches) == 1) {
-                                array_shift($matches);
+                                foreach ($handlers as $func) {
+                                        array_shift($matches);
 
-                                // Add additional arguments
-                                for ($i = func_num_args() - 1; $i > 1; $i--) {
-                                        array_unshift($matches, func_get_arg($i));
+                                        // Add additional arguments
+                                        for ($i = func_num_args() - 1; $i > 1; $i--) {
+                                                array_unshift($matches, func_get_arg($i));
+                                        }
+
+                                        array_unshift($matches, $this);
+
+                                        $r = call_user_func_array($func, $matches);
+                                        if (!empty($r)) return $r;
+                                        if (in_array($type, $this->bhandlers)) return;
                                 }
-
-                                array_unshift($matches, $this);
-
-                                $r = call_user_func_array($func, $matches);
-                                if ($r === true) continue;
-                                return $r;
                         }
                 }
         }
@@ -216,9 +215,11 @@ class ProtoIRC {
 
                                 $now = time();
 
-                                foreach ($this->handlers['timer'] as $time => $func) {
+                                foreach ($this->handlers['timer'] as $time => $handlers) {
                                         if (($now % $time) == 0) {
-                                                call_user_func($func, $this);
+                                                foreach ($handlers as $func) {
+                                                        call_user_func($func, $this);
+                                                }
                                         }
                                 }
                         } while (!feof($this->socket));
