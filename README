@@ -29,7 +29,6 @@ $irc->go();
 
 See client.php for a slightly more in depth example. Use the runclient.sh to run it using rlwrap.
 See addons/prototyping.php for an undocumented prototyping helper..
-See addons/feedreader.php for a short async demo..
 See addons/customactions.php for a custom handler demo..
 
 Available API:
@@ -53,7 +52,7 @@ $irc->send('#destination', 'message', 'color');
 $irc->termEcho('message');
 $irc->termEcho('message', 'color');
 
-// Bind a regex to a function, on either COMMAND (STDIN), IN, or OUT
+// Bind a regex to a function, on either command (STDIN), in, or out
 $irc->bind('command/in/out', 'regex', function ($irc, $first_match, $second_match etc) {
         // Runs if the regex matches
 
@@ -65,7 +64,6 @@ $irc->bind('command/in/out', 'regex', function ($irc, $first_match, $second_matc
 
         $irc->send('#channel', 'This will print before the above statement');
 
-        // return true if callbacks should continue to be called
         // return false in 'out' callback to stop message being sent
 });
 
@@ -84,10 +82,10 @@ $irc->timer(60, function ($irc) {});
 
 // User defined callbacks
 $irc->in('/^:(.*)!~.* PRIVMSG (.*) :!(.*)/', function ($irc, $nick, $channel, $args) {
-        $irc->msg($args); // Shortcut for $irc->call('msg', $args);
+        $irc->msg($args, $nick, $channel); // Shortcut for $irc->call('msg', $args etc);
 });
 
 // Shortcut for $irc->bind('msg', etc
-$irc->msg('/^echo (.*)/', function ($irc, $args) {
-        $irc->send($irc->last, $args);
+$irc->msg('/^echo (.*)/', function ($irc, $nick, $channel, $line) {
+        $irc->send($irc->last, $line);
 });
