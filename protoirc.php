@@ -5,7 +5,8 @@
 //
 
 class ProtoIRC {
-        var $host, $port, $nick, $last, $socket, $handlers = array(), $bhandlers = array('command');
+        var $host, $port, $nick, $last, $socket;
+        var $handlers = array(), $bhandlers = array('command');
 
 	function ProtoIRC($host, $port, $nick, $conn_func) {
 		$this->host = $host;
@@ -13,25 +14,25 @@ class ProtoIRC {
 		$this->nick = $nick;
 
                 // Built in handlers
-                $this->in('/^.* (?:422|376)/', $conn_func);
+                $this->in('/^.* (?:422|376)(?#builtin)/', $conn_func);
 
-                $this->in('/^PING (.*)/', function ($irc, $args) {
+                $this->in('/^PING (.*)(?#builtin)/', function ($irc, $args) {
                         $irc->send("PONG {$args}");
                 });
 
-                $this->in('/^:(.*)!~.* PRIVMSG (.*) :/', function ($irc, $nick, $dest) {
+                $this->in('/^:(.*)!~.* PRIVMSG (.*) :(?#builtin)/', function ($irc, $nick, $dest) {
                         $irc->last = ($dest == $irc->nick) ? $nick : $dest;
                 });
 
-                $this->out('/^(?:JOIN) (#.*)/', function ($irc, $dest) {
+                $this->out('/^(?:JOIN) (#.*)(?#builtin)/', function ($irc, $dest) {
                         $irc->last = $dest;
                 });
 
-                $this->out('/^(?:PRIVMSG) (.*) :/', function ($irc, $dest) {
+                $this->out('/^(?:PRIVMSG) (.*) :(?#builtin)/', function ($irc, $dest) {
                         $irc->last = $dest;
                 });
 
-                $this->out('/^NICK (.*)/', function ($irc, $nick) {
+                $this->out('/^NICK (.*)(?#builtin)/', function ($irc, $nick) {
                         $irc->nick = $nick;
                 });
         }
@@ -63,10 +64,12 @@ class ProtoIRC {
                 }
         }
 
+        // TODO: Rename this function to something shorter..
         function termEcho($line, $color = 'default') {
                 echo $this->termColor($color).$line.$this->termColor();
         }
 
+        // FIXME: This function is ugly
 	function send() {
                 switch (func_num_args()) {
                 case 1:
@@ -89,7 +92,6 @@ class ProtoIRC {
                         }
 
 
-                        // FIXME UGLY!
                         // Print stuff containing newlines as expected..
 
                         if (!is_array($msg) && strpos($msg, "\n") !== false) {
@@ -123,8 +125,10 @@ class ProtoIRC {
 		}
 	}
 
+        // This function is too simple, it feels like cheating.
+        // TODO: Add some form of join command.. :)
         function async($function) {
-                if (pcntl_fork() == 0) {
+                if (pcntl_fork() == 0) { // In child process now
                         call_user_func($function, $this);
                         exit();
                 }
@@ -132,7 +136,7 @@ class ProtoIRC {
 
 	function bind($type, $regex, $function) {
 		if (is_callable($function)) {
-			$this->handlers[$type][$regex][] = $function;
+			$this->handlers[$type][$regex] = $function;
 
                         // Sort by regex length, rough approximation of regex
                         // "wideness", since we want catch-all's to come last.
@@ -140,20 +144,18 @@ class ProtoIRC {
                         uksort($this->handlers[$type], function ($a, $b) {
                                 return (strlen($b) - strlen($a));
                         });
-
-                        return count($this->handlers[$type][$regex]) - 1; // Key
                 } else {
-                        unset($this->handlers[$type][$regex][$function]);
+                        unset($this->handlers[$type][$regex]);
                 }
 	}
 
-        // Simple bind shortcut using overloading
-        function __call($func, $args) {
-                if (sizeof($args) == 1 || (!is_callable($args[1]) && !is_numeric($args[1]))) {
-                        array_unshift($args, $func);
+        // Simple bind/call shortcut using overloading
+        function __call($type, $args) {
+                array_unshift($args, $type);
+
+                if (count($args) == 2 || !is_callable($args[2])) {
                         return call_user_func_array(array($this, 'call'), $args);
                 } else {
-                        array_unshift($args, $func);
                         return call_user_func_array(array($this, 'bind'), $args);
                 }
         }
@@ -161,22 +163,24 @@ class ProtoIRC {
         function call($type, $data) {
                 if (!isset($this->handlers[$type])) return;
 
-                foreach ($this->handlers[$type] as $regex => $handlers) {
+                foreach ($this->handlers[$type] as $regex => $func) {
                         if (preg_match($regex, $data, $matches) == 1) {
-                                foreach ($handlers as $func) {
-                                        array_shift($matches);
+                                array_shift($matches); // Remove full match from array
 
-                                        // Add additional arguments
-                                        for ($i = func_num_args() - 1; $i > 1; $i--) {
-                                                array_unshift($matches, func_get_arg($i));
-                                        }
-
-                                        array_unshift($matches, $this);
-
-                                        $r = call_user_func_array($func, $matches);
-                                        if (!empty($r)) return $r;
-                                        if (in_array($type, $this->bhandlers)) return;
+                                // Add additional arguments
+                                for ($i = func_num_args() - 1; $i > 1; $i--) {
+                                        array_unshift($matches, func_get_arg($i));
                                 }
+
+                                array_unshift($matches, $this); // Add $irc parameter
+
+                                $r = call_user_func_array($func, $matches);
+
+                                if (!empty($r)) return $r;
+
+                                // By default 'command' handlers should return as soon as
+                                // a regex has matched. More intuitive this way.
+                                if (in_array($type, $this->bhandlers)) return;
                         }
                 }
         }
@@ -187,7 +191,7 @@ class ProtoIRC {
 
                         if (!$this->socket) {
                                 sleep(60); // Retry after a minute
-                                break;
+                                continue;
                         }
 
                         $this->send("NICK {$this->nick}");
@@ -201,30 +205,29 @@ class ProtoIRC {
                                                 $buffer = trim(fgets($stream, 1024), "\r\n");
 
                                                 if (stream_is_local($stream)) {
-                                                        $this->call('command', $buffer);
+                                                        $this->command($buffer);
                                                 } else {
-                                                        $this->call('in', $buffer);
+                                                        $this->in($buffer);
                                                 }
                                         }
                                 }
 
-                                // Clean up any waiting children
+                                // Clean up any waiting child processes
                                 pcntl_waitpid(-1, $status, WNOHANG);
 
-                                if (!isset($this->handlers['timer'])) continue;
+                                // The timer bind is a special case that is handled here
+                                if (isset($this->handlers['timer'])) {
+                                        $now = time();
 
-                                $now = time();
-
-                                foreach ($this->handlers['timer'] as $time => $handlers) {
-                                        if (($now % $time) == 0) {
-                                                foreach ($handlers as $func) {
+                                        foreach ($this->handlers['timer'] as $time => $func) {
+                                                if (($now % $time) == 0) {
                                                         call_user_func($func, $this);
                                                 }
                                         }
                                 }
-                        } while (!feof($this->socket));
+                        } while ($this->socket && !feof($this->socket));
 
-                        sleep(30); // Reconnect after half a minute
+                        sleep(30); // Apparently disconnected, wait half a minute and then reconnect
                 }
         }
 }

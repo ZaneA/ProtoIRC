@@ -12,7 +12,7 @@ It makes extensive use of closures and regular expressions.
 A "Hello-World" (echo) example is as follows:
 
 <?php
-require('protoirc.php');
+require 'protoirc.php';
 
 $irc = new ProtoIRC('hostname', 6667, 'NickName', function ($irc) {
         // This code will run on connect
@@ -53,7 +53,7 @@ $irc->termEcho('message');
 $irc->termEcho('message', 'color');
 
 // Bind a regex to a function, on either command (STDIN), in, or out
-$irc->bind('command/in/out', 'regex', function ($irc, $first_match, $second_match etc) {
+$irc->command/in/out('regex', function ($irc, $first_match, $second_match etc) {
         // Runs if the regex matches
 
         // Run stuff asynchronously
@@ -67,25 +67,16 @@ $irc->bind('command/in/out', 'regex', function ($irc, $first_match, $second_matc
         // return false in 'out' callback to stop message being sent
 });
 
-// Or use the shortcuts...
-$irc->command('regex', function ($irc, $first_match, $second_match etc) {});
-$irc->in('regex', function ($irc, $first_match, $second_match etc) {});
-$irc->out('regex', function ($irc, $first_match, $second_match etc) {});
-
 // Bind a timer
-$irc->bind('timer', 60, function ($irc) {
+$irc->timer(60, function ($irc) {
         // Runs every minute
 });
 
-// Shortcut...
-$irc->timer(60, function ($irc) {});
-
 // User defined callbacks
 $irc->in('/^:(.*)!~.* PRIVMSG (.*) :!(.*)/', function ($irc, $nick, $channel, $args) {
-        $irc->msg($args, $nick, $channel); // Shortcut for $irc->call('msg', $args etc);
+        $irc->msg($args, $nick, $channel); // Calls 'msg' callback, defined below
 });
 
-// Shortcut for $irc->bind('msg', etc
 $irc->msg('/^echo (.*)/', function ($irc, $nick, $channel, $line) {
         $irc->send($irc->last, $line);
 });

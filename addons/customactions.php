@@ -48,6 +48,6 @@ $irc->msg('/^!feed (.*)/', function ($irc, $nick, $channel, $feed) {
         });
 });
 
-$irc->in('/^:(.*)!~.* PRIVMSG (.*) :(.*)/', function ($irc, $nick, $channel, $args) {
+$irc->in('/^:(.*)!~.* PRIVMSG (.*) :(.*)(?#msg)/', function ($irc, $nick, $channel, $args) {
         $irc->msg($args, $nick, $channel);
 });

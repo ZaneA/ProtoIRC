@@ -6,10 +6,9 @@
 
 $saved_handlers = array();
 $filename = '';
-$timer = null;
 
 $irc->command('/^\/(proto|new)/', function ($irc, $cmd) {
-        global $filename, $timer, $saved_handlers;
+        global $filename, $saved_handlers;
 
         $filename = tempnam('/tmp', 'proto');
 
@@ -29,7 +28,7 @@ PROTO;
 
         $filem = filemtime($filename);
 
-        $timer = $irc->timer(5, function ($irc) use (&$filem) {
+        $irc->timer(5, function ($irc) use (&$filem) {
                 global $filename, $saved_handlers;
 
                 clearstatcache(true, $filename);
@@ -60,10 +59,10 @@ PROTO;
 });
 
 $irc->command('/^\/save (.*)/', function ($irc, $newfilename) {
-        global $filename, $timer;
+        global $filename;
 
         if (!empty($filename)) {
-                $irc->timer(5, $timer); // passing index to it will remove it
+                $irc->timer(5, null); // unset timer
 
                 rename($filename, 'addons/'.$newfilename.'.php');
 
