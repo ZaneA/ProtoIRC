@@ -5,13 +5,15 @@
 //
 
 class ProtoIRC {
-        var $host, $port, $nick, $last, $socket;
+        var $host, $port, $nick, $last, $socket, $lastmsg;
         var $handlers = array(), $bhandlers = array('command');
 
-	function ProtoIRC($host, $port, $nick, $conn_func) {
-		$this->host = $host;
-		$this->port = $port;
-		$this->nick = $nick;
+        function ProtoIRC($host, $port, $nick, $conn_func) {
+                $this->host = $host;
+                $this->port = $port;
+                $this->nick = $nick;
+
+                $this->lastmsg = time();
 
                 // Built in handlers
                 $this->in('/^.* (?:422|376)(?#builtin)/', $conn_func);
@@ -37,15 +39,15 @@ class ProtoIRC {
                 });
         }
 
-	function ircColor($color = 'default') {
-		$colors = array('lt.white', 'black', 'blue', 'green', 'lt.red', 'red', 'purple', 'yellow', 'lt.yellow', 'lt.green', 'cyan', 'lt.cyan', 'lt.blue', 'lt.purple', 'lt.black', 'white');
+        function ircColor($color = 'default') {
+                $colors = array('lt.white', 'black', 'blue', 'green', 'lt.red', 'red', 'purple', 'yellow', 'lt.yellow', 'lt.green', 'cyan', 'lt.cyan', 'lt.blue', 'lt.purple', 'lt.black', 'white');
 
-		if (($color = array_search($color, $colors)) !== false) {
-			return chr(0x03).sprintf('%02s', $color);
-		} else {
-			return chr(0x03);
-		}
-	}
+                if (($color = array_search($color, $colors)) !== false) {
+                        return chr(0x03).sprintf('%02s', $color);
+                } else {
+                        return chr(0x03);
+                }
+        }
 
         function termColor($color = 'default') {
                 if (substr($color, 0, 3) == 'lt.') {
@@ -70,7 +72,7 @@ class ProtoIRC {
         }
 
         // FIXME: This function is ugly
-	function send() {
+        function send() {
                 switch (func_num_args()) {
                 case 1:
                         $data = func_get_arg(0);
@@ -117,13 +119,13 @@ class ProtoIRC {
                         return;
                 }
 
-                if ($this->call('out', $data) === false) return;
+                if ($this->out($data) === false) return;
 
-		if ($this->socket) {
-			fwrite($this->socket, "{$data}\r\n");
+                if ($this->socket) {
+                        fwrite($this->socket, "{$data}\r\n");
                         usleep(200000);
-		}
-	}
+                }
+        }
 
         // This function is too simple, it feels like cheating.
         // TODO: Add some form of join command.. :)
@@ -134,9 +136,9 @@ class ProtoIRC {
                 }
         }
 
-	function bind($type, $regex, $function) {
-		if (is_callable($function)) {
-			$this->handlers[$type][$regex] = $function;
+        function bind($type, $regex, $function) {
+                if (is_callable($function)) {
+                        $this->handlers[$type][$regex] = $function;
 
                         // Sort by regex length, rough approximation of regex
                         // "wideness", since we want catch-all's to come last.
@@ -147,7 +149,7 @@ class ProtoIRC {
                 } else {
                         unset($this->handlers[$type][$regex]);
                 }
-	}
+        }
 
         // Simple bind/call shortcut using overloading
         function __call($type, $args) {
@@ -185,9 +187,9 @@ class ProtoIRC {
                 }
         }
 
-	function go() {
+        function go() {
                 while (true) {
-                        $this->socket = fsockopen($this->host, $this->port);
+                        $this->socket = @fsockopen($this->host, $this->port);
 
                         if (!$this->socket) {
                                 sleep(60); // Retry after a minute
@@ -207,6 +209,7 @@ class ProtoIRC {
                                                 if (stream_is_local($stream)) {
                                                         $this->command($buffer);
                                                 } else {
+                                                        $this->lastmsg = time();
                                                         $this->in($buffer);
                                                 }
                                         }
@@ -225,9 +228,15 @@ class ProtoIRC {
                                                 }
                                         }
                                 }
+
+                                // Have we lost connection? (No activity for 5 minutes)
+                                if (time() > $this->lastmsg + (60 * 5)) {
+                                        fclose($this->socket);
+                                        $this->socket = null;
+                                }
                         } while ($this->socket && !feof($this->socket));
 
-                        sleep(30); // Apparently disconnected, wait half a minute and then reconnect
+                        sleep(30); // Wait half a minute and then reconnect
                 }
         }
 }

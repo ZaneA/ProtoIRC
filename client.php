@@ -82,4 +82,3 @@ $irc->in('/(.*)/', function ($irc, $line) {
 
 // Everything is bound, so lets go!
 $irc->go();
-?>
