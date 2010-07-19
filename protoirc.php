@@ -13,8 +13,6 @@ class ProtoIRC {
                 $this->port = $port;
                 $this->nick = $nick;
 
-                $this->lastmsg = time();
-
                 // Built in handlers
                 $this->in('/^.* (?:422|376)(?#builtin)/', $conn_func);
 
@@ -195,6 +193,8 @@ class ProtoIRC {
                                 sleep(60); // Retry after a minute
                                 continue;
                         }
+
+                        $this->lastmsg = time();
 
                         $this->send("NICK {$this->nick}");
                         $this->send("USER {$this->nick} * * :{$this->nick}");

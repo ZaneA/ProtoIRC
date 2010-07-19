@@ -59,7 +59,7 @@ $irc->in('/^:.* 332 .* (.*) :(.*)/', function ($irc, $channel, $topic) {
 
 
 // Someone is joining or parting
-$irc->in('/^:(.*)!~.* (JOIN|PART) :?(.*)/', function ($irc, $nick, $cmd, $channel) {
+$irc->in('/^:(.*)!.* (JOIN|PART) :?(.*)/', function ($irc, $nick, $cmd, $channel) {
         if ($cmd == 'JOIN') {
                 $irc->termEcho(">> {$nick} has joined {$channel}\n", 'lt.green');
         } else {
@@ -69,7 +69,7 @@ $irc->in('/^:(.*)!~.* (JOIN|PART) :?(.*)/', function ($irc, $nick, $cmd, $channe
 
 
 // Someone has messaged a channel or PM'd us, so print it
-$irc->in('/^:(.*)!~.* PRIVMSG (.*) :(.*)/', function ($irc, $nick, $channel, $msg) {
+$irc->in('/^:(.*)!.* PRIVMSG (.*) :(.*)/', function ($irc, $nick, $channel, $msg) {
         $irc->termEcho("({$channel}.", 'lt.black').$irc->termEcho($nick, 'blue').$irc->termEcho(')> ', 'lt.black').$irc->termEcho("{$msg}\n", 'lt.white'); 
 });
 

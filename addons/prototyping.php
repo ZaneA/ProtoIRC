@@ -17,7 +17,7 @@ $irc->command('/^\/(proto|new)/', function ($irc, $cmd) {
         $prototype = <<<'PROTO'
 #!/usr/bin/php
 <?php
-$irc->in('/^:(.*)!~.* PRIVMSG (.*) :!echo (.*)/', function ($irc, $nick, $channel, $args) {
+$irc->in('/^:(.*)!.* PRIVMSG (.*) :!echo (.*)/', function ($irc, $nick, $channel, $args) {
         $irc->send($channel, "Echoing {$args} for you, {$nick}", 'yellow');
 });
 PROTO;
