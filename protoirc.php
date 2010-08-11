@@ -64,8 +64,8 @@ class ProtoIRC {
                 }
         }
 
-        // TODO: Rename this function to something shorter..
-        function termEcho($line, $color = 'default') {
+        // TODO: Better name?
+        function stdout($line, $color = 'default') {
                 echo $this->termColor($color).$line.$this->termColor();
         }
 
@@ -207,7 +207,7 @@ class ProtoIRC {
                                                 $buffer = trim(fgets($stream, 1024), "\r\n");
 
                                                 if (stream_is_local($stream)) {
-                                                        $this->command($buffer);
+                                                        $this->stdin($buffer);
                                                 } else {
                                                         $this->lastmsg = time();
                                                         $this->in($buffer);

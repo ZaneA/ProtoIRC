@@ -7,7 +7,7 @@
 $saved_handlers = array();
 $filename = '';
 
-$irc->command('/^\/(proto|new)/', function ($irc, $cmd) {
+$irc->stdin('/^\/(proto|new)/', function ($irc, $cmd) {
         global $filename, $saved_handlers;
 
         $filename = tempnam('/tmp', 'proto');
@@ -48,9 +48,9 @@ PROTO;
                                 include($filename);
 
                                 ob_end_clean();
-                                $irc->termEcho("Reloaded {$filename}\n", 'lt.green');
+                                $irc->stdout("Reloaded {$filename}\n", 'lt.green');
                         } else {
-                                $irc->termEcho("Errors were found in {$filename}\n", 'lt.red');
+                                $irc->stdout("Errors were found in {$filename}\n", 'lt.red');
                         }
                 }
         });
@@ -58,7 +58,7 @@ PROTO;
         $saved_handlers = $irc->handlers;
 });
 
-$irc->command('/^\/save (.*)/', function ($irc, $newfilename) {
+$irc->stdin('/^\/save (.*)/', function ($irc, $newfilename) {
         global $filename;
 
         if (!empty($filename)) {
@@ -66,16 +66,16 @@ $irc->command('/^\/save (.*)/', function ($irc, $newfilename) {
 
                 rename($filename, 'addons/'.$newfilename.'.php');
 
-                $irc->termEcho("Moved {$filename} to addons/{$newfilename}.php\n", 'lt.green');
+                $irc->stdout("Moved {$filename} to addons/{$newfilename}.php\n", 'lt.green');
 
                 $filename = '';
         }
 });
 
-$irc->command('/^\/php (.*)/', function ($irc, $code) {
+$irc->stdin('/^\/php (.*)/', function ($irc, $code) {
         if (@eval("return true; {$code}")) {
                 eval($code);
         } else {
-                $irc->termEcho("Error in eval'd code\n", 'lt.red');
+                $irc->stdout("Error in eval'd code\n", 'lt.red');
         }
 });
