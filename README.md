@@ -82,3 +82,11 @@ It's probably easier just to look at protoirc.php, but here is the basic run dow
     $irc->msg('/^echo (.*)/', function ($irc, $nick, $channel, $line) {
             $irc->send($irc->last, $line);
     });
+
+    // Fork/Join
+    $child = $irc->async(function ($irc) {
+            // run some asynchronous stuff
+            return array('some', 'simple', 'data');
+    });
+
+    $output = $irc->wait($child); // $output contains above array
