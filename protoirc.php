@@ -5,8 +5,8 @@
 //
 
 class ProtoIRC {
-        var $host, $port, $nick, $last, $socket, $lastmsg;
-        var $handlers = array(), $bhandlers = array('command');
+        var $host, $port, $nick, $last, $socket, $lastmsg, $child;
+        var $handlers = array(), $bhandlers = array('stdin');
 
         function ProtoIRC($host, $port, $nick, $conn_func) {
                 $this->host = $host;
@@ -125,12 +125,41 @@ class ProtoIRC {
                 }
         }
 
-        // This function is too simple, it feels like cheating.
-        // TODO: Add some form of join command.. :)
         function async($function) {
-                if (pcntl_fork() == 0) { // In child process now
-                        call_user_func($function, $this);
+                socket_create_pair(AF_UNIX, SOCK_STREAM, 0, $sockets); // IPC
+
+                list($parent, $child) = $sockets;
+
+                if (($pid = pcntl_fork()) == 0) { // In child process now
+                        socket_close($child);
+                        socket_write($parent, serialize(call_user_func($function, $this)));
+                        socket_close($parent);
+
                         exit();
+                }
+
+                socket_close($parent);
+
+                $this->child[$pid] = $child;
+                
+                return $pid;
+        }
+
+        // Will block if child is still alive, otherwise will directly return output
+        function wait($pid) {
+                if (isset($this->child[$pid])) {
+                        pcntl_waitpid($pid, $status);
+
+                        if (is_resource($this->child[$pid])) {
+                                $output = unserialize(socket_read($this->child[$pid], 1024));
+                                socket_close($this->child[$pid]);
+                        } else {
+                                $output = $this->child[$pid];
+                        }
+
+                        unset($this->child[$pid]);
+
+                        return $output;
                 }
         }
 
@@ -178,7 +207,7 @@ class ProtoIRC {
 
                                 if (!empty($r)) return $r;
 
-                                // By default 'command' handlers should return as soon as
+                                // By default 'stdin' handlers should return as soon as
                                 // a regex has matched. More intuitive this way.
                                 if (in_array($type, $this->bhandlers)) return;
                         }
@@ -215,8 +244,16 @@ class ProtoIRC {
                                         }
                                 }
 
-                                // Clean up any waiting child processes
-                                pcntl_waitpid(-1, $status, WNOHANG);
+                                // Garbage Collect, Clean up any waiting child processes
+                                if (($pid = pcntl_waitpid(-1, $status, WNOHANG)) > 0) {
+                                        $output = unserialize(socket_read($this->child[$pid], 1024));
+                                        socket_close($this->child[$pid]);
+                                        if (!empty($output)) {
+                                                $this->child[$pid] = $output;
+                                        } else {
+                                                unset($this->child[$pid]);
+                                        }
+                                }
 
                                 // The timer bind is a special case that is handled here
                                 if (isset($this->handlers['timer'])) {
