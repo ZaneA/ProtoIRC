@@ -8,7 +8,7 @@ require 'protoirc.php';
     
 
 // Create IRC Class
-$irc = new ProtoIRC('10.1.1.9', 6667, 'ProtoBot', function ($irc) {
+$irc = new ProtoIRC('ProtoBot', '10.1.1.9:6667', function ($irc) {
         $irc->send('JOIN #Bottest');
         $irc->send('NOTICE #Bottest :Hey there!');
 });

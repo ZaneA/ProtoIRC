@@ -8,10 +8,9 @@ class ProtoIRC {
         var $host, $port, $nick, $last, $socket, $lastmsg, $child;
         var $handlers = array(), $bhandlers = array('stdin');
 
-        function ProtoIRC($host, $port, $nick, $conn_func) {
-                $this->host = $host;
-                $this->port = $port;
+        function ProtoIRC($nick, $conn_string, $conn_func) {
                 $this->nick = $nick;
+                list($this->host, $this->port) = explode(':', $conn_string);
 
                 // Built in handlers
                 $this->in('/^.* (?:422|376)(?#builtin)/', $conn_func);
@@ -38,7 +37,7 @@ class ProtoIRC {
         }
 
         function ircColor($color = 'default') {
-                $colors = array('lt.white', 'black', 'blue', 'green', 'lt.red', 'red', 'purple', 'yellow', 'lt.yellow', 'lt.green', 'cyan', 'lt.cyan', 'lt.blue', 'lt.purple', 'lt.black', 'white');
+                $colors = explode(' ', 'lt.white black blue green lt.red red purple yellow lt.yellow lt.green cyan lt.cyan lt.blue lt.purple lt.black white');
 
                 if (($color = array_search($color, $colors)) !== false) {
                         return chr(0x03).sprintf('%02s', $color);
@@ -55,7 +54,7 @@ class ProtoIRC {
                         $bold = 0;
                 }
 
-                $colors = array('black', 'red', 'green', 'yellow', 'blue', 'purple', 'cyan', 'white');
+                $colors = explode(' ', 'black red green yellow blue purple cyan white');
 
                 if (($color = array_search($color, $colors)) !== false) {
                         return "\033[{$bold};".(30 + $color)."m";
@@ -64,7 +63,6 @@ class ProtoIRC {
                 }
         }
 
-        // TODO: Better name?
         function stdout($line, $color = 'default') {
                 echo $this->termColor($color).$line.$this->termColor();
         }
@@ -81,9 +79,7 @@ class ProtoIRC {
                         $dest = func_get_arg(0);
                         $msg = func_get_arg(1);
 
-                        if (empty($dest) || empty($msg)) {
-                                return;
-                        }
+                        if (empty($dest) || empty($msg)) return;
 
                         if (func_num_args() == 3) {
                                 $color = func_get_arg(2);
@@ -107,9 +103,9 @@ class ProtoIRC {
                         }
 
                         if ($color) {
-                                $data = 'PRIVMSG '.$dest.' :'.$this->ircColor($color).$msg.$this->ircColor();
+                                $data = "PRIVMSG {$dest} :".$this->ircColor($color).$msg.$this->ircColor();
                         } else {
-                                $data = 'PRIVMSG '.$dest.' :'.$msg;
+                                $data = "PRIVMSG {$dest} :{$msg}";
                         }
                         break;
 
@@ -151,7 +147,7 @@ class ProtoIRC {
                         pcntl_waitpid($pid, $status);
 
                         if (is_resource($this->child[$pid])) {
-                                $output = unserialize(socket_read($this->child[$pid], 1024));
+                                $output = unserialize(socket_read($this->child[$pid], 4096));
                                 socket_close($this->child[$pid]);
                         } else {
                                 $output = $this->child[$pid];
@@ -216,12 +212,8 @@ class ProtoIRC {
 
         function go() {
                 while (true) {
-                        $this->socket = @fsockopen($this->host, $this->port);
-
-                        if (!$this->socket) {
-                                sleep(60); // Retry after a minute
-                                continue;
-                        }
+                        // Keep reconnecting until it succeeds
+                        if (!($this->socket = @fsockopen($this->host, $this->port))) continue;
 
                         $this->lastmsg = time();
 
@@ -233,7 +225,7 @@ class ProtoIRC {
 
                                 if (stream_select($r, $w = null, $x = null, 1)) {
                                         foreach ($r as $stream) {
-                                                $buffer = trim(fgets($stream, 1024), "\r\n");
+                                                $buffer = trim(fgets($stream, 4096), "\r\n");
 
                                                 if (stream_is_local($stream)) {
                                                         $this->stdin($buffer);
@@ -246,7 +238,7 @@ class ProtoIRC {
 
                                 // Garbage Collect, Clean up any waiting child processes
                                 if (($pid = pcntl_waitpid(-1, $status, WNOHANG)) > 0) {
-                                        $output = unserialize(socket_read($this->child[$pid], 1024));
+                                        $output = unserialize(socket_read($this->child[$pid], 4096));
                                         socket_close($this->child[$pid]);
                                         if (!empty($output)) {
                                                 $this->child[$pid] = $output;

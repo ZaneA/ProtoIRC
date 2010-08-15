@@ -16,7 +16,7 @@ A "Hello-World" (echo) example is as follows:
     <?php
     require 'protoirc.php';
      
-    $irc = new ProtoIRC('hostname', 6667, 'NickName', function ($irc) {
+    $irc = new ProtoIRC('NickName', 'hostname:6667', function ($irc) {
             // This code will run on connect
             $irc->send('JOIN #channel');
     });
@@ -37,7 +37,7 @@ Available API:
 It's probably easier just to look at protoirc.php, but here is the basic run down.
 
     <?php
-    $irc = new ProtoIRC('hostname', port, 'nickname', function ($irc) {
+    $irc = new ProtoIRC('nickname', 'hostname:port', function ($irc) {
             // Startup code
     });
      
