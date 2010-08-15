@@ -27,7 +27,7 @@ class ProtoIRC {
                         $irc->last = $dest;
                 });
 
-                $this->out('/^(?:PRIVMSG) (.*) :(?#builtin)/', function ($irc, $dest) {
+                $this->out('/^(?:PRIVMSG|NOTICE) (.*) :(?#builtin)/', function ($irc, $dest) {
                         $irc->last = $dest;
                 });
 
@@ -126,7 +126,7 @@ class ProtoIRC {
                         socket_write($parent, serialize(call_user_func($function, $this)));
                         socket_close($parent);
 
-                        exit();
+                        exit;
                 }
 
                 socket_close($parent);
@@ -184,7 +184,7 @@ class ProtoIRC {
                 if (!isset($this->handlers[$type])) return;
 
                 foreach ($this->handlers[$type] as $regex => $func) {
-                        if (preg_match($regex, $data, $matches) == 1) {
+                        if (preg_match($regex, $data, $matches)) {
                                 array_shift($matches); // Remove full match from array
 
                                 // Add additional arguments
