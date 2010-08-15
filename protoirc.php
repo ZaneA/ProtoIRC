@@ -69,6 +69,8 @@ class ProtoIRC {
 
         // FIXME: This function is ugly
         function send() {
+                if (!$this->socket) return;
+                
                 switch (func_num_args()) {
                 case 1:
                         $data = func_get_arg(0);
@@ -81,12 +83,7 @@ class ProtoIRC {
 
                         if (empty($dest) || empty($msg)) return;
 
-                        if (func_num_args() == 3) {
-                                $color = func_get_arg(2);
-                        } else {
-                                $color = false;
-                        }
-
+                        $color = (func_num_args() == 3) ? func_get_arg(2) : false;
 
                         // Print stuff containing newlines as expected..
 
@@ -115,10 +112,8 @@ class ProtoIRC {
 
                 if ($this->out($data) === false) return;
 
-                if ($this->socket) {
-                        fwrite($this->socket, "{$data}\r\n");
-                        usleep(200000);
-                }
+                fwrite($this->socket, "{$data}\r\n");
+                usleep(200000);
         }
 
         function async($function) {
