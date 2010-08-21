@@ -44,6 +44,7 @@ It's probably easier just to look at protoirc.php, but here is the basic run dow
     // Useful variables
     $irc->nick;
     $irc->last; // Last message destination
+    $irc->channels; // Currently joined channels
      
     // Send a message through the IRC connection
     $irc->send('RAW MESSAGE');
@@ -72,6 +73,7 @@ It's probably easier just to look at protoirc.php, but here is the basic run dow
     // Bind a timer
     $irc->timer(60, function ($irc) {
             // Runs every minute
+            $irc->send($irc->channels, 'Alert all channels of something');
     });
      
     // User defined callbacks

@@ -5,7 +5,7 @@
 //
 
 class ProtoIRC {
-        var $host, $port, $nick, $last, $socket, $lastmsg, $child;
+        var $host, $port, $nick, $last, $channels, $socket, $lastmsg, $child;
         var $handlers = array(), $bhandlers = array('stdin');
 
         function ProtoIRC($nick, $conn_string, $conn_func) {
@@ -19,8 +19,20 @@ class ProtoIRC {
                         $irc->send("PONG {$args}");
                 });
 
-                $this->in('/^:(.*)!~.* PRIVMSG (.*) :(?#builtin)/', function ($irc, $nick, $dest) {
+                $this->in('/^:(.*?)!~.* PRIVMSG (.*) :(?#builtin)/', function ($irc, $nick, $dest) {
                         $irc->last = ($dest == $irc->nick) ? $nick : $dest;
+                });
+
+                $this->in('/^:(.*?)!~.*? JOIN :(.*)(?#builtin)/', function ($irc, $nick, $channel) {
+                        if ($nick == $irc->nick) $irc->channels[] = $channel;
+                });
+
+                $this->in('/^:(.*?)!~.*? PART (.*)(?#builtin)/', function ($irc, $nick, $channel) {
+                        if ($nick == $irc->nick) {
+                                if (($key = array_search($channel, $irc->channels)) !== false) {
+                                        unset($irc->channels[$key]);
+                                }
+                        }
                 });
 
                 $this->out('/^(?:JOIN) (#.*)(?#builtin)/', function ($irc, $dest) {
@@ -84,6 +96,16 @@ class ProtoIRC {
                         if (empty($dest) || empty($msg)) return;
 
                         $color = (func_num_args() == 3) ? func_get_arg(2) : false;
+
+                        // Send to multiple destinations..
+
+                        if (is_array($dest)) {
+                                foreach ($dest as $sdest) {
+                                        $this->send($sdest, $msg, $color);
+                                }
+
+                                return;
+                        }
 
                         // Print stuff containing newlines as expected..
 
