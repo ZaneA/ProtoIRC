@@ -12,16 +12,17 @@ class ProtoIRC {
                 $this->nick = parse_url($conn_string, PHP_URL_USER) ?: 'ProtoBot';
                 $this->host = parse_url($conn_string, PHP_URL_HOST) ?: '127.0.0.1';
                 $this->port = parse_url($conn_string, PHP_URL_PORT) ?: '6667';
+                $channels = trim(parse_url($conn_string, PHP_URL_PATH), '/');
 
                 // Built in handlers
-                $this->in('/^.* (?:422|376)(?#builtincb)/', function ($irc) use ($conn_string) {
-                        $channels = trim(parse_url($conn_string, PHP_URL_PATH), '/');
-                        if (!empty($channels)) {
+ 
+                if (!empty($channels)) {
+                        $this->in('/^.* (?:422|376)(?#builtincb)/', function ($irc) use ($conn_string) {
                                 foreach (explode(',', $channels) as $channel) {
                                         $irc->send("JOIN #{$channel}");
                                 }
-                        }
-                });
+                        });
+                }
 
                 if (is_callable($conn_func)) $this->in('/^.* (?:422|376)(?#usercb)/', $conn_func);
 
