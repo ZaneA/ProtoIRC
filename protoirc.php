@@ -8,19 +8,30 @@ class ProtoIRC {
         var $host, $port, $nick, $last, $channels, $socket, $lastmsg, $child;
         var $handlers = array(), $bhandlers = array('stdin');
 
-        function ProtoIRC($nick, $conn_string, $conn_func) {
-                $this->nick = $nick;
-                list($this->host, $this->port) = explode(':', $conn_string);
+        function ProtoIRC($conn_string, $conn_func = null) {
+                $this->nick = parse_url($conn_string, PHP_URL_USER) ?: 'ProtoBot';
+                $this->host = parse_url($conn_string, PHP_URL_HOST) ?: '127.0.0.1';
+                $this->port = parse_url($conn_string, PHP_URL_PORT) ?: '6667';
 
                 // Built in handlers
-                $this->in('/^.* (?:422|376)(?#builtin)/', $conn_func);
+                $this->in('/^.* (?:422|376)(?#builtincb)/', function ($irc) use ($conn_string) {
+                        $channels = trim(parse_url($conn_string, PHP_URL_PATH), '/');
+                        if (!empty($channels)) {
+                                foreach (explode(',', $channels) as $channel) {
+                                        $irc->send("JOIN #{$channel}");
+                                }
+                        }
+                });
+
+                if (is_callable($conn_func)) $this->in('/^.* (?:422|376)(?#usercb)/', $conn_func);
 
                 $this->in('/^PING (.*)(?#builtin)/', function ($irc, $args) {
                         $irc->send("PONG {$args}");
                 });
 
-                $this->in('/^:(.*?)!~.* PRIVMSG (.*) :(?#builtin)/', function ($irc, $nick, $dest) {
+                $this->in('/^:(.*?)!~.* PRIVMSG (.*) :(.*)(?#builtin)/', function ($irc, $nick, $dest, $msg) {
                         $irc->last = ($dest == $irc->nick) ? $nick : $dest;
+                        $irc->msg($msg, $nick, $dest);
                 });
 
                 $this->in('/^:(.*?)!~.*? JOIN :(.*)(?#builtin)/', function ($irc, $nick, $channel) {
