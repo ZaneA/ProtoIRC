@@ -17,7 +17,7 @@ class ProtoIRC {
                 // Built in handlers
  
                 if (!empty($channels)) {
-                        $this->in('/^.* (?:422|376)(?#builtincb)/', function ($irc) use ($conn_string) {
+                        $this->in('/^.* (?:422|376)(?#builtincb)/', function ($irc) use ($conn_string, $channels) {
                                 foreach (explode(',', $channels) as $channel) {
                                         $irc->send("JOIN #{$channel}");
                                 }
