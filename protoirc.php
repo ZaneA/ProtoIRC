@@ -4,6 +4,8 @@
 // Author: Zane Ashby
 //
 
+function ProtoIRC($conn_string, $conn_func = null) { return new ProtoIRC($conn_string, $conn_func); }
+
 class ProtoIRC {
         var $host, $port, $nick, $last, $channels, $socket, $lastmsg, $child;
         var $handlers = array(), $bhandlers = array('stdin');
@@ -201,6 +203,8 @@ class ProtoIRC {
                 } else {
                         unset($this->handlers[$type][$regex]);
                 }
+
+                return $this;
         }
 
         // Simple bind/call shortcut using overloading
@@ -234,9 +238,11 @@ class ProtoIRC {
 
                                 // By default 'stdin' handlers should return as soon as
                                 // a regex has matched. More intuitive this way.
-                                if (in_array($type, $this->bhandlers)) return;
+                                if (in_array($type, $this->bhandlers)) return $this;
                         }
                 }
+
+                return $this;
         }
 
         function go() {

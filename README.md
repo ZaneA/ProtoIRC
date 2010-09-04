@@ -32,6 +32,17 @@ A "Hello-World" (echo) example is as follows:
     $irc->go();
     ?>
 
+Object chaining is now supported:
+
+    <?php
+    require 'protoirc.php';
+
+    ProtoIRC('NickName@hostname:6667/channel')
+        ->stdin('/(.*)/', function ($irc, $text) { $irc->send($irc->channels, $text); })
+        ->msg('/^!echo (.*)/', function ($irc, $nick, $channel, $args) { $irc->send($channel, "Echoing {$args}"); })
+        ->go();
+    ?>
+
 See client.php for a slightly more in depth example. Use the runclient.sh to run it using rlwrap.
 See addons/prototyping.php for an undocumented prototyping helper..
 See addons/customactions.php for a custom handler demo..
