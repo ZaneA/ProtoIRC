@@ -15,15 +15,20 @@ class ProtoIRC {
                 $this->host = parse_url($conn_string, PHP_URL_SCHEME) . parse_url($conn_string, PHP_URL_HOST) ?: '127.0.0.1';
                 $this->port = parse_url($conn_string, PHP_URL_PORT) ?: '6667';
                 $channels = trim(parse_url($conn_string, PHP_URL_PATH), '/');
+                $auth = parse_url($conn_string, PHP_URL_PASS);
+                $key = parse_url($conn_string, PHP_URL_FRAGMENT);
 
                 // Built in handlers
  
                 if (!empty($channels)) {
                         $this->in(
                                 '/^.* (?:422|376)(?#builtincb)/',
-                                function ($irc) use ($conn_string, $channels) {
+                                function ($irc) use ($conn_string, $channels, $auth, $key) {
+                                        if ($auth)
+                                                $irc->send('NickServ', "IDENTIFY {$auth}");
+
                                         foreach (explode(',', $channels) as $channel)
-                                                $irc->send("JOIN #{$channel}");
+                                                $irc->send("JOIN #{$channel} {$key}");
                                 }
                         );
                 }
