@@ -12,7 +12,7 @@ class ProtoIRC {
 
         function ProtoIRC($conn_string, $conn_func = null) {
                 $this->nick = parse_url($conn_string, PHP_URL_USER) ?: 'ProtoBot';
-                $this->host = parse_url($conn_string, PHP_URL_HOST) ?: '127.0.0.1';
+                $this->host = parse_url($conn_string, PHP_URL_SCHEME) . parse_url($conn_string, PHP_URL_HOST) ?: '127.0.0.1';
                 $this->port = parse_url($conn_string, PHP_URL_PORT) ?: '6667';
                 $channels = trim(parse_url($conn_string, PHP_URL_PATH), '/');
 
@@ -66,7 +66,7 @@ class ProtoIRC {
                 $colors = explode(' ', 'lt.white black blue green lt.red red purple yellow lt.yellow lt.green cyan lt.cyan lt.blue lt.purple lt.black white');
 
                 if (($color = array_search($color, $colors)) !== false) {
-                        return chr(0x03).sprintf('%02s', $color);
+                        return chr(0x03) . sprintf('%02s', $color);
                 } else {
                         return chr(0x03);
                 }
@@ -83,14 +83,14 @@ class ProtoIRC {
                 $colors = explode(' ', 'black red green yellow blue purple cyan white');
 
                 if (($color = array_search($color, $colors)) !== false) {
-                        return "\033[{$bold};".(30 + $color)."m";
+                        return "\033[{$bold};" . (30 + $color) . "m";
                 } else {
                         return "\033[0m";
                 }
         }
 
         function stdout($line, $color = 'default') {
-                echo $this->termColor($color).$line.$this->termColor();
+                echo $this->termColor($color) . $line . $this->termColor();
         }
 
         // FIXME: This function is ugly
@@ -136,7 +136,7 @@ class ProtoIRC {
                         }
 
                         if ($color) {
-                                $data = "PRIVMSG {$dest} :".$this->ircColor($color).$msg.$this->ircColor();
+                                $data = "PRIVMSG {$dest} :" . $this->ircColor($color) . $msg . $this->ircColor();
                         } else {
                                 $data = "PRIVMSG {$dest} :{$msg}";
                         }
