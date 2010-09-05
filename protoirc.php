@@ -19,11 +19,13 @@ class ProtoIRC {
                 // Built in handlers
  
                 if (!empty($channels)) {
-                        $this->in('/^.* (?:422|376)(?#builtincb)/', function ($irc) use ($conn_string, $channels) {
-                                foreach (explode(',', $channels) as $channel) {
-                                        $irc->send("JOIN #{$channel}");
+                        $this->in(
+                                '/^.* (?:422|376)(?#builtincb)/',
+                                function ($irc) use ($conn_string, $channels) {
+                                        foreach (explode(',', $channels) as $channel)
+                                                $irc->send("JOIN #{$channel}");
                                 }
-                        });
+                        );
                 }
 
                 if (is_callable($conn_func))
@@ -47,18 +49,16 @@ class ProtoIRC {
                 $this->in(
                         '/^:(.*?)!~.*? JOIN :(.*)(?#builtin)/',
                         function ($irc, $nick, $channel) {
-                                if ($nick == $irc->nick) $irc->channels[] = $channel;
+                                if ($nick == $irc->nick)
+                                        $irc->channels[] = $channel;
                         }
                 );
 
                 $this->in(
                         '/^:(.*?)!~.*? PART (.*)(?#builtin)/',
                         function ($irc, $nick, $channel) {
-                                if ($nick == $irc->nick) {
-                                        if (($key = array_search($channel, $irc->channels)) !== false) {
-                                                unset($irc->channels[$key]);
-                                        }
-                                }
+                                if ($nick == $irc->nick && ($key = array_search($channel, $irc->channels)) !== false)
+                                        unset($irc->channels[$key]);
                         }
                 );
 
@@ -107,7 +107,8 @@ class ProtoIRC {
 
         // FIXME: This function is ugly
         function send() {
-                if (!$this->socket) return;
+                if (!$this->socket)
+                        return;
                 
                 switch (func_num_args()) {
                 case 1:
@@ -119,30 +120,28 @@ class ProtoIRC {
                         $dest = func_get_arg(0);
                         $msg = func_get_arg(1);
 
-                        if (empty($dest) || empty($msg)) return;
+                        if (empty($dest) || empty($msg))
+                                return;
 
                         $color = (func_num_args() == 3) ? func_get_arg(2) : false;
 
                         // Send to multiple destinations..
 
                         if (is_array($dest)) {
-                                foreach ($dest as $sdest) {
+                                foreach ($dest as $sdest)
                                         $this->send($sdest, $msg, $color);
-                                }
 
                                 return;
                         }
 
                         // Print stuff containing newlines as expected..
 
-                        if (!is_array($msg) && strpos($msg, "\n") !== false) {
+                        if (!is_array($msg) && strpos($msg, "\n") !== false)
                                 $msg = explode("\n", $msg);
-                        }
 
                         if (is_array($msg)) {
-                                foreach ($msg as $line) {
+                                foreach ($msg as $line)
                                         $this->send($dest, $line, $color);
-                                }
 
                                 return;
                         }
@@ -158,7 +157,8 @@ class ProtoIRC {
                         return;
                 }
 
-                if ($this->out($data) === false) return;
+                if ($this->out($data) === false)
+                        return;
 
                 fwrite($this->socket, "{$data}\r\n");
                 usleep(200000);
@@ -236,26 +236,28 @@ class ProtoIRC {
         }
 
         function call($type, $data) {
-                if (!isset($this->handlers[$type])) return;
+                if (!isset($this->handlers[$type]))
+                        return;
 
                 foreach ($this->handlers[$type] as $regex => $func) {
                         if (preg_match($regex, $data, $matches)) {
                                 array_shift($matches); // Remove full match from array
 
                                 // Add additional arguments
-                                for ($i = func_num_args() - 1; $i > 1; $i--) {
+                                for ($i = func_num_args() - 1; $i > 1; $i--)
                                         array_unshift($matches, func_get_arg($i));
-                                }
 
                                 array_unshift($matches, $this); // Add $irc parameter
 
                                 $r = call_user_func_array($func, $matches);
 
-                                if (!empty($r)) return $r;
+                                if (!empty($r))
+                                        return $r;
 
                                 // By default 'stdin' handlers should return as soon as
                                 // a regex has matched. More intuitive this way.
-                                if (in_array($type, $this->bhandlers)) return $this;
+                                if (in_array($type, $this->bhandlers))
+                                        return $this;
                         }
                 }
 
@@ -265,7 +267,8 @@ class ProtoIRC {
         function go() {
                 while (true) {
                         // Keep reconnecting until it succeeds
-                        if (!($this->socket = @fsockopen($this->host, $this->port))) continue;
+                        if (!($this->socket = @fsockopen($this->host, $this->port)))
+                                continue;
 
                         $this->lastmsg = time();
 
@@ -303,11 +306,9 @@ class ProtoIRC {
                                 if (isset($this->handlers['timer'])) {
                                         $now = time();
 
-                                        foreach ($this->handlers['timer'] as $time => $func) {
-                                                if (($now % $time) == 0) {
+                                        foreach ($this->handlers['timer'] as $time => $func)
+                                                if (($now % $time) == 0)
                                                         call_user_func($func, $this);
-                                                }
-                                        }
                                 }
 
                                 // Have we lost connection? (No activity for 5 minutes)
