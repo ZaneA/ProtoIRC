@@ -26,40 +26,52 @@ class ProtoIRC {
                         });
                 }
 
-                if (is_callable($conn_func)) $this->in('/^.* (?:422|376)(?#usercb)/', $conn_func);
+                if (is_callable($conn_func))
+                        $this->in('/^.* (?:422|376)(?#usercb)/', $conn_func);
 
-                $this->in('/^PING (.*)(?#builtin)/', function ($irc, $args) {
-                        $irc->send("PONG {$args}");
-                });
+                $this->in(
+                        '/^PING (.*)(?#builtin)/',
+                        function ($irc, $args) {
+                                $irc->send("PONG {$args}");
+                        }
+                );
 
-                $this->in('/^:(.*?)!~.* PRIVMSG (.*) :(.*)(?#builtin)/', function ($irc, $nick, $dest, $msg) {
-                        $irc->last = ($dest == $irc->nick) ? $nick : $dest;
-                        $irc->msg($msg, $nick, $dest);
-                });
+                $this->in(
+                        '/^:(.*?)!~.* PRIVMSG (.*) :(.*)(?#builtin)/',
+                        function ($irc, $nick, $dest, $msg) {
+                                $irc->last = ($dest == $irc->nick) ? $nick : $dest;
+                                $irc->msg($msg, $nick, $dest);
+                        }
+                );
 
-                $this->in('/^:(.*?)!~.*? JOIN :(.*)(?#builtin)/', function ($irc, $nick, $channel) {
-                        if ($nick == $irc->nick) $irc->channels[] = $channel;
-                });
+                $this->in(
+                        '/^:(.*?)!~.*? JOIN :(.*)(?#builtin)/',
+                        function ($irc, $nick, $channel) {
+                                if ($nick == $irc->nick) $irc->channels[] = $channel;
+                        }
+                );
 
-                $this->in('/^:(.*?)!~.*? PART (.*)(?#builtin)/', function ($irc, $nick, $channel) {
-                        if ($nick == $irc->nick) {
-                                if (($key = array_search($channel, $irc->channels)) !== false) {
-                                        unset($irc->channels[$key]);
+                $this->in(
+                        '/^:(.*?)!~.*? PART (.*)(?#builtin)/',
+                        function ($irc, $nick, $channel) {
+                                if ($nick == $irc->nick) {
+                                        if (($key = array_search($channel, $irc->channels)) !== false) {
+                                                unset($irc->channels[$key]);
+                                        }
                                 }
                         }
-                });
+                );
 
-                $this->out('/^(?:JOIN) (#.*)(?#builtin)/', function ($irc, $dest) {
-                        $irc->last = $dest;
-                });
-
-                $this->out('/^(?:PRIVMSG|NOTICE) (.*) :(?#builtin)/', function ($irc, $dest) {
-                        $irc->last = $dest;
-                });
-
-                $this->out('/^NICK (.*)(?#builtin)/', function ($irc, $nick) {
-                        $irc->nick = $nick;
-                });
+                $this->out(
+                        array(
+                                '/^(?:JOIN) (#.*)(?#builtin)/',
+                                '/^(?:PRIVMSG|NOTICE) (.*) :(?#builtin)/',
+                                '/^NICK (.*)(?#builtin)/',
+                        ),
+                        function ($irc, $dest) {
+                                $irc->last = $dest;
+                        }
+                );
         }
 
         function ircColor($color = 'default') {
@@ -192,14 +204,19 @@ class ProtoIRC {
 
         function bind($type, $regex, $function) {
                 if (is_callable($function)) {
-                        $this->handlers[$type][$regex] = $function;
+                        if (!is_array($regex))
+                                $regex = array($regex);
 
-                        // Sort by regex length, rough approximation of regex
-                        // "wideness", since we want catch-all's to come last.
-                        // This can probably be improved..
-                        uksort($this->handlers[$type], function ($a, $b) {
-                                return (strlen($b) - strlen($a));
-                        });
+                        foreach ($regex as $_regex) {
+                                $this->handlers[$type][$_regex] = $function;
+
+                                // Sort by regex length, rough approximation of regex
+                                // "wideness", since we want catch-all's to come last.
+                                // This can probably be improved..
+                                uksort($this->handlers[$type], function ($a, $b) {
+                                        return (strlen($b) - strlen($a));
+                                });
+                        }
                 } else {
                         unset($this->handlers[$type][$regex]);
                 }
