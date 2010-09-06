@@ -87,7 +87,7 @@ class ProtoIRC {
 
 
         function genIRCColors() {
-                $irccolors = array_flip(explode(' ', 'lt.white black blue green lt.red red purple yellow lt.yellow lt.green cyan lt.cyan lt.blue lt.purple lt.black white'));
+                $irccolors = array_flip(explode(' ', '_white black blue green _red red purple yellow _yellow _green cyan _cyan _blue _purple _black white'));
 
                 array_walk($irccolors, function ($value, $key) use (&$irccolors) {
                         $irccolors[$key] = chr(0x03) . sprintf('%02s', $value);
@@ -101,7 +101,7 @@ class ProtoIRC {
                 foreach ($colors as $color => $key)
                         $colors[$color] = "\033[0;" . (30 + $key) . "m";
 
-                $bcolors = array_flip(explode(' ', 'lt.black lt.red lt.green lt.yellow lt.blue lt.purple lt.cyan lt.white'));
+                $bcolors = array_flip(explode(' ', '_black _red _green _yellow _blue _purple _cyan _white'));
                 foreach ($bcolors as $color => $key)
                         $bcolors[$color] = "\033[1;" . (30 + $key) . "m";
 

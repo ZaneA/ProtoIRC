@@ -48,9 +48,9 @@ PROTO;
                                 include($filename);
 
                                 ob_end_clean();
-                                $irc->stdout("Reloaded {$filename}\n", 'lt.green');
+                                $irc->stdout("Reloaded {$filename}\n", '_green');
                         } else {
-                                $irc->stdout("Errors were found in {$filename}\n", 'lt.red');
+                                $irc->stdout("Errors were found in {$filename}\n", '_red');
                         }
                 }
         });
@@ -66,7 +66,7 @@ $irc->stdin('/^\/save (.*)/', function ($irc, $newfilename) {
 
                 rename($filename, 'addons/'.$newfilename.'.php');
 
-                $irc->stdout("Moved {$filename} to addons/{$newfilename}.php\n", 'lt.green');
+                $irc->stdout("Moved {$filename} to addons/{$newfilename}.php\n", '_green');
 
                 $filename = '';
         }
@@ -76,6 +76,6 @@ $irc->stdin('/^\/php (.*)/', function ($irc, $code) {
         if (@eval("return true; {$code}")) {
                 eval($code);
         } else {
-                $irc->stdout("Error in eval'd code\n", 'lt.red');
+                $irc->stdout("Error in eval'd code\n", '_red');
         }
 });

@@ -9,7 +9,7 @@ require 'protoirc.php';
 
 // Create IRC Class
 $irc = new ProtoIRC('ProtoBot@10.1.1.9:6667/Bottest', function ($irc) {
-        $irc->notice('#Bottest :Hey there!')->send('#Bottest', "{$irc->yellow}Hey there!{$irc->default}test");
+        $irc->notice('#Bottest :Hey there!')->send('#Bottest', "Hey there!");
 });
 
 
@@ -47,35 +47,35 @@ $irc->stdin('/(.*)/', function ($irc, $msg) {
 
 // Catch outgoing messages and print them
 $irc->out('/^PRIVMSG (.*) :(.*)/', function ($irc, $channel, $msg) {
-        $irc->stdout("{$irc->ansi->lt.black}({$channel}.{$irc->ansi->lt.blue}{$irc->nick}{$irc->ansi->lt.black})> {$irc->ansi->lt.white}{$msg}\n"); 
+        $irc->stdout("{$irc->ansi->_black}({$channel}.{$irc->ansi->_blue}{$irc->nick}{$irc->ansi->_black})> {$irc->ansi->_white}{$msg}\n"); 
 });
 
 
 // Display the topic when joining a channel
 $irc->in('/^:.* 332 .* (.*) :(.*)/', function ($irc, $channel, $topic) {
-        $irc->stdout("The topic of {$channel} is {$topic}\n", 'lt.brown');
+        $irc->stdout("The topic of {$channel} is {$topic}\n", '_brown');
 });
 
 
 // Someone is joining or parting
 $irc->in('/^:(.*)!.* (JOIN|PART) :?(.*)/', function ($irc, $nick, $cmd, $channel) {
         if ($cmd == 'JOIN') {
-                $irc->stdout(">> {$nick} has joined {$channel}\n", 'lt.green');
+                $irc->stdout(">> {$nick} has joined {$channel}\n", '_green');
         } else {
-                $irc->stdout("<< {$nick} has left {$channel}\n", 'lt.red');
+                $irc->stdout("<< {$nick} has left {$channel}\n", '_red');
         }
 });
 
 
 // Someone has messaged a channel or PM'd us, so print it
 $irc->in('/^:(.*)!.* PRIVMSG (.*) :(.*)/', function ($irc, $nick, $channel, $msg) {
-        $irc->stdout("{$irc->ansi->lt.black}({$channel}.{$irc->ansi->blue}{$nick}{$irc->ansi->lt.black})> {$irc->ansi->lt.white}{$msg}\n");
+        $irc->stdout("{$irc->ansi->_black}({$channel}.{$irc->ansi->blue}{$nick}{$irc->ansi->_black})> {$irc->ansi->_white}{$msg}\n");
 });
 
 
 // Catch-all: Print raw line to terminal for debugging/hacking
 $irc->in('/(.*)/', function ($irc, $line) {
-        $irc->stdout("<< {$line}\n", 'lt.black');
+        $irc->stdout("<< {$line}\n", '_black');
 });
 
 
