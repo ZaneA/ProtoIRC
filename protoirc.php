@@ -18,6 +18,10 @@ class ProtoIRC {
                 $auth = parse_url($conn_string, PHP_URL_PASS);
                 $key = parse_url($conn_string, PHP_URL_FRAGMENT);
 
+                // Generate IRC color properties eg. $irc->yellow
+                foreach ($this->genColors() as $color => $value)
+                        $this->$color = $value;
+
                 // Built in handlers
  
                 if (!empty($channels)) {
@@ -79,14 +83,17 @@ class ProtoIRC {
                 );
         }
 
-        function ircColor($color = 'default') {
-                $colors = explode(' ', 'lt.white black blue green lt.red red purple yellow lt.yellow lt.green cyan lt.cyan lt.blue lt.purple lt.black white');
 
-                if (($color = array_search($color, $colors)) !== false) {
-                        return chr(0x03) . sprintf('%02s', $color);
-                } else {
-                        return chr(0x03);
-                }
+        function genColors() {
+                $irccolors = array_flip(explode(' ', 'lt.white black blue green lt.red red purple yellow lt.yellow lt.green cyan lt.cyan lt.blue lt.purple lt.black white'));
+
+                array_walk($irccolors, function ($value, $key) use (&$irccolors) {
+                        $irccolors[$key] = chr(0x03) . sprintf('%02s', $value);
+                });
+
+                $irccolors['default'] = chr(0x03);
+
+                return (object)$irccolors;
         }
 
         function termColor($color = 'default') {
@@ -152,7 +159,7 @@ class ProtoIRC {
                         }
 
                         if ($color) {
-                                $data = "PRIVMSG {$dest} :" . $this->ircColor($color) . $msg . $this->ircColor();
+                                $data = "PRIVMSG {$dest} :{$this->$color}{$msg}{$this->default}";
                         } else {
                                 $data = "PRIVMSG {$dest} :{$msg}";
                         }

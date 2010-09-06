@@ -42,12 +42,12 @@ $irc->msg('/^!feed (.*)/', function ($irc, $nick, $channel, $feed) {
                         $irc->send($irc->last, "Error fetching {$feed}, sorry", 'red');
                 } else {
                         foreach ($rs['items'] as $item) {
-                                $irc->send($irc->last, $irc->ircColor('yellow').$item['title'].$irc->ircColor()." ({$item['link']})");
+                                $irc->send($irc->last, "{$irc->yellow}{$item['title']}{$irc->default} ({$item['link']})");
                         }
                 }
         });
 });
 
-$irc->in('/^:(.*)!.* PRIVMSG (.*) :(.*)(?#msg)/', function ($irc, $nick, $channel, $args) {
+/*$irc->in('/^:(.*)!.* PRIVMSG (.*) :(.*)(?#msg)/', function ($irc, $nick, $channel, $args) {
         $irc->msg($args, $nick, $channel);
-});
+});*/
