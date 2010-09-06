@@ -167,6 +167,8 @@ class ProtoIRC {
 
                 fwrite($this->socket, "{$data}\r\n");
                 usleep(200000);
+
+                return $this;
         }
 
         function async($function) {
@@ -242,7 +244,7 @@ class ProtoIRC {
 
         function call($type, $data) {
                 if (!isset($this->handlers[$type]))
-                        return;
+                        return $this->send(strtoupper($type) . " {$data}");
 
                 foreach ($this->handlers[$type] as $regex => $func) {
                         if (preg_match($regex, $data, $matches)) {
@@ -271,8 +273,8 @@ class ProtoIRC {
 
         function go() {
                 while (true) {
-                        // Keep reconnecting until it succeeds
                         if (!($this->socket = @fsockopen($this->host, $this->port)))
+                                // Keep reconnecting until it succeeds
                                 continue;
 
                         $this->lastmsg = time();

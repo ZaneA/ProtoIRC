@@ -99,6 +99,10 @@ It's probably easier just to look at protoirc.php, but here is the basic run dow
             $irc->send($irc->last, $line);
     });
 
+    // Anything else here is just a shortcut for the send command
+    $irc->notice('#Channel :blah');
+    $irc->privmsg('#Channel :blah');
+
     // Fork/Join
     $child = $irc->async(function ($irc) {
             // run some asynchronous stuff
