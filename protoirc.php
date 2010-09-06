@@ -8,7 +8,7 @@ function ProtoIRC($conn_string, $conn_func = null) { return new ProtoIRC($conn_s
 
 class ProtoIRC {
         var $host, $port, $nick, $last, $channels, $socket, $lastmsg, $child;
-        var $handlers = array(), $bhandlers = array('stdin');
+        var $handlers = array(), $bhandlers = array('stdin'), $ansi;
 
         function ProtoIRC($conn_string, $conn_func = null) {
                 $this->nick = parse_url($conn_string, PHP_URL_USER) ?: 'ProtoBot';
@@ -19,8 +19,10 @@ class ProtoIRC {
                 $key = parse_url($conn_string, PHP_URL_FRAGMENT);
 
                 // Generate IRC color properties eg. $irc->yellow
-                foreach ($this->genColors() as $color => $value)
+                foreach ($this->genIRCColors() as $color => $value)
                         $this->$color = $value;
+
+                $this->ansi = $this->genANSIColors();
 
                 // Built in handlers
  
@@ -84,37 +86,30 @@ class ProtoIRC {
         }
 
 
-        function genColors() {
+        function genIRCColors() {
                 $irccolors = array_flip(explode(' ', 'lt.white black blue green lt.red red purple yellow lt.yellow lt.green cyan lt.cyan lt.blue lt.purple lt.black white'));
 
                 array_walk($irccolors, function ($value, $key) use (&$irccolors) {
                         $irccolors[$key] = chr(0x03) . sprintf('%02s', $value);
                 });
 
-                $irccolors['default'] = chr(0x03);
-
-                return (object)$irccolors;
+                return (object)array_merge($irccolors, array('default' => chr(0x03)));
         }
 
-        function termColor($color = 'default') {
-                if (substr($color, 0, 3) == 'lt.') {
-                        $color = substr($color, 3);
-                        $bold = 1;
-                } else {
-                        $bold = 0;
-                }
+        function genANSIColors() {
+                $colors = array_flip(explode(' ', 'black red green yellow blue purple cyan white'));
+                foreach ($colors as $color => $key)
+                        $colors[$color] = "\033[0;" . (30 + $key) . "m";
 
-                $colors = explode(' ', 'black red green yellow blue purple cyan white');
+                $bcolors = array_flip(explode(' ', 'lt.black lt.red lt.green lt.yellow lt.blue lt.purple lt.cyan lt.white'));
+                foreach ($bcolors as $color => $key)
+                        $bcolors[$color] = "\033[1;" . (30 + $key) . "m";
 
-                if (($color = array_search($color, $colors)) !== false) {
-                        return "\033[{$bold};" . (30 + $color) . "m";
-                } else {
-                        return "\033[0m";
-                }
+                return (object)array_merge($colors, $bcolors, array('default' => "\033[0m"));
         }
 
         function stdout($line, $color = 'default') {
-                echo $this->termColor($color) . $line . $this->termColor();
+                echo "{$this->ansi->$color}{$line}{$this->ansi->default}";
         }
 
         // FIXME: This function is ugly

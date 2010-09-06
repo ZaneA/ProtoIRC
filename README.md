@@ -67,6 +67,7 @@ It's probably easier just to look at protoirc.php, but here is the basic run dow
 
     // Embedding Colors
     $irc->send('#destination', "{$irc->yellow}Yellow!{$irc->default}");
+    $irc->stdout("{$irc->ansi->yellow}Yellow!{$irc->ansi->default}");
      
     // Echo to the terminal
     $irc->stdout('message');

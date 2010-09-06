@@ -47,7 +47,7 @@ $irc->stdin('/(.*)/', function ($irc, $msg) {
 
 // Catch outgoing messages and print them
 $irc->out('/^PRIVMSG (.*) :(.*)/', function ($irc, $channel, $msg) {
-        $irc->stdout("({$channel}.", 'lt.black').$irc->stdout($irc->nick, 'lt.blue').$irc->stdout(')> ', 'lt.black').$irc->stdout("{$msg}\n", 'lt.white'); 
+        $irc->stdout("{$irc->ansi->lt.black}({$channel}.{$irc->ansi->lt.blue}{$irc->nick}{$irc->ansi->lt.black})> {$irc->ansi->lt.white}{$msg}\n"); 
 });
 
 
@@ -69,7 +69,7 @@ $irc->in('/^:(.*)!.* (JOIN|PART) :?(.*)/', function ($irc, $nick, $cmd, $channel
 
 // Someone has messaged a channel or PM'd us, so print it
 $irc->in('/^:(.*)!.* PRIVMSG (.*) :(.*)/', function ($irc, $nick, $channel, $msg) {
-        $irc->stdout("({$channel}.", 'lt.black').$irc->stdout($nick, 'blue').$irc->stdout(')> ', 'lt.black').$irc->stdout("{$msg}\n", 'lt.white'); 
+        $irc->stdout("{$irc->ansi->lt.black}({$channel}.{$irc->ansi->blue}{$nick}{$irc->ansi->lt.black})> {$irc->ansi->lt.white}{$msg}\n");
 });
 
 
