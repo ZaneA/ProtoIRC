@@ -7,7 +7,7 @@
 function ProtoIRC($conn_string, $conn_func = null) { return new ProtoIRC($conn_string, $conn_func); }
 
 class ProtoIRC {
-        var $host, $port, $nick, $last, $channels, $socket, $lastmsg, $child;
+        var $host, $port, $nick, $last, $channels, $socket, $child;
         var $handlers = array(), $bhandlers = array('stdin'), $ansi;
 
         function ProtoIRC($conn_string, $conn_func = null) {
@@ -34,7 +34,7 @@ class ProtoIRC {
                                                 $irc->send('NickServ', "IDENTIFY {$auth}");
 
                                         foreach (explode(',', $channels) as $channel)
-                                                $irc->send("JOIN #{$channel} {$key}");
+                                                $irc->join("#{$channel} {$key}");
                                 }
                         );
                 }
@@ -45,7 +45,7 @@ class ProtoIRC {
                 $this->in(
                         '/^PING (.*)(?#builtin)/',
                         function ($irc, $args) {
-                                $irc->send("PONG {$args}");
+                                $irc->pong($args);
                         }
                 );
 
@@ -279,10 +279,10 @@ class ProtoIRC {
                                 // Keep reconnecting until it succeeds
                                 continue;
 
-                        $this->lastmsg = time();
+                        $lastmsg = time();
 
-                        $this->send("NICK {$this->nick}");
-                        $this->send("USER {$this->nick} * * :{$this->nick}");
+                        $this->nick($this->nick);
+                        $this->user("{$this->nick} * * :{$this->nick}");
 
                         do {
                                 $r = array($this->socket, STDIN);
@@ -294,7 +294,7 @@ class ProtoIRC {
                                                 if (stream_is_local($stream)) {
                                                         $this->stdin($buffer);
                                                 } else {
-                                                        $this->lastmsg = time();
+                                                        $lastmsg = time();
                                                         $this->in($buffer);
                                                 }
                                         }
@@ -321,7 +321,7 @@ class ProtoIRC {
                                 }
 
                                 // Have we lost connection? (No activity for 5 minutes)
-                                if (time() > $this->lastmsg + (60 * 5)) {
+                                if (time() > $lastmsg + (60 * 5)) {
                                         fclose($this->socket);
                                         $this->socket = null;
                                 }
