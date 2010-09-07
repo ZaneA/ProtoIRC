@@ -289,7 +289,7 @@ class ProtoIRC {
 
                                 if (stream_select($r, $w = null, $x = null, 1)) {
                                         foreach ($r as $stream) {
-                                                $buffer = trim(fgets($stream, 4096), "\r\n");
+                                                $buffer = trim(fgets($stream, 4096));
 
                                                 if (stream_is_local($stream)) {
                                                         $this->stdin($buffer);
