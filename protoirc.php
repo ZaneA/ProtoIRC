@@ -213,10 +213,7 @@ class ProtoIRC {
 
         function bind($type, $regex, $function) {
                 if (is_callable($function)) {
-                        if (!is_array($regex))
-                                $regex = array($regex);
-
-                        foreach ($regex as $_regex) {
+                        foreach ((array)$regex as $_regex) {
                                 $this->handlers[$type][$_regex] = $function;
 
                                 // Sort by regex length, rough approximation of regex
