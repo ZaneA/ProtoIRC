@@ -39,8 +39,7 @@ class ProtoIRC {
                         );
                 }
 
-                if (is_callable($conn_func))
-                        $this->in('/^.* (?:422|376)(?#usercb)/', $conn_func);
+                $this->in('/^.* (?:422|376)(?#usercb)/', $conn_func);
 
                 $this->in(
                         '/^PING (.*)(?#builtin)/',
@@ -314,7 +313,7 @@ class ProtoIRC {
 
                                         foreach ($this->handlers['timer'] as $time => $func)
                                                 if (($now % $time) == 0)
-                                                        call_user_func($func, $this);
+                                                        $func($this);
                                 }
 
                                 // Have we lost connection? (No activity for 5 minutes)
