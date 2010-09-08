@@ -11,6 +11,7 @@ class ProtoIRC {
         var $handlers = array(), $bhandlers = array('stdin'), $ansi;
 
         function ProtoIRC($conn_string, $conn_func = null) {
+                // FIXME Yuck
                 $this->nick = parse_url($conn_string, PHP_URL_USER) ?: 'ProtoBot';
                 $this->host = parse_url($conn_string, PHP_URL_SCHEME) . parse_url($conn_string, PHP_URL_HOST) ?: '127.0.0.1';
                 $this->port = parse_url($conn_string, PHP_URL_PORT) ?: '6667';
@@ -18,13 +19,12 @@ class ProtoIRC {
                 $auth = parse_url($conn_string, PHP_URL_PASS);
                 $key = parse_url($conn_string, PHP_URL_FRAGMENT);
 
-                // Generate IRC color properties eg. $irc->yellow
                 foreach ($this->genIRCColors() as $color => $value)
                         $this->$color = $value;
 
                 $this->ansi = $this->genANSIColors();
 
-                // Built in handlers
+                // Set up some built in handlers for various messages
  
                 if (!empty($channels)) {
                         $this->in(
@@ -89,10 +89,10 @@ class ProtoIRC {
                 $irccolors = array_flip(explode(' ', '_white black blue green _red red purple yellow _yellow _green cyan _cyan _blue _purple _black white'));
 
                 array_walk($irccolors, function ($value, $key) use (&$irccolors) {
-                        $irccolors[$key] = chr(0x03) . sprintf('%02s', $value);
+                        $irccolors[$key] = sprintf("\3%02s", $value);
                 });
 
-                return (object)array_merge($irccolors, array('default' => chr(0x03)));
+                return (object)($irccolors + array('default' => "\3"));
         }
 
         function genANSIColors() {
@@ -104,7 +104,7 @@ class ProtoIRC {
                 foreach ($bcolors as $color => $key)
                         $bcolors[$color] = "\033[1;" . (30 + $key) . "m";
 
-                return (object)array_merge($colors, $bcolors, array('default' => "\033[0m"));
+                return (object)($colors + $bcolors + array('default' => "\033[0m"));
         }
 
         function stdout($line, $color = 'default') {
@@ -192,7 +192,6 @@ class ProtoIRC {
                 return $pid;
         }
 
-        // Will block if child is still alive, otherwise will directly return output
         function wait($pid) {
                 if (isset($this->child[$pid])) {
                         pcntl_waitpid($pid, $status);
@@ -217,19 +216,15 @@ class ProtoIRC {
 
                                 // Sort by regex length, rough approximation of regex
                                 // "wideness", since we want catch-all's to come last.
-                                // This can probably be improved..
                                 uksort($this->handlers[$type], function ($a, $b) {
                                         return (strlen($b) - strlen($a));
                                 });
                         }
-                } else {
-                        unset($this->handlers[$type][$regex]);
                 }
 
                 return $this;
         }
 
-        // Simple bind/call shortcut using overloading
         function __call($type, $args) {
                 array_unshift($args, $type);
 
@@ -248,15 +243,12 @@ class ProtoIRC {
                         if (preg_match($regex, $data, $matches)) {
                                 array_shift($matches); // Remove full match from array
 
-                                // Add additional arguments
                                 for ($i = func_num_args() - 1; $i > 1; $i--)
                                         array_unshift($matches, func_get_arg($i));
 
                                 array_unshift($matches, $this); // Add $irc parameter
 
-                                $r = call_user_func_array($func, $matches);
-
-                                if (!empty($r))
+                                if (($r = call_user_func_array($func, $matches)))
                                         return $r;
 
                                 // By default 'stdin' handlers should return as soon as
@@ -272,8 +264,7 @@ class ProtoIRC {
         function go() {
                 while (true) {
                         if (!($this->socket = @fsockopen($this->host, $this->port)))
-                                // Keep reconnecting until it succeeds
-                                continue;
+                                continue; // Keep reconnecting until it succeeds
 
                         $lastmsg = time();
 
@@ -307,7 +298,6 @@ class ProtoIRC {
                                         }
                                 }
 
-                                // The timer bind is a special case that is handled here
                                 if (isset($this->handlers['timer'])) {
                                         $now = time();
 
@@ -316,14 +306,13 @@ class ProtoIRC {
                                                         $func($this);
                                 }
 
-                                // Have we lost connection? (No activity for 5 minutes)
-                                if (time() > $lastmsg + (60 * 5)) {
+                                if (time() > $lastmsg + (60 * 5)) { // No activity for 5 minutes?
                                         fclose($this->socket);
                                         $this->socket = null;
                                 }
                         } while ($this->socket && !feof($this->socket));
 
-                        sleep(30); // Wait half a minute and then reconnect
+                        sleep(30); // Wait half a minute before reconnecting
                 }
         }
 }
