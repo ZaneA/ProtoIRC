@@ -62,6 +62,7 @@ It's probably easier just to look at protoirc.php, but here is the basic run dow
      
     // Send a message through the IRC connection
     $irc->send('RAW MESSAGE');
+    $irc->irccmd('args'); // eg. $irc->join('#channel');
     $irc->send('#destination', 'message');
     $irc->send('#destination', 'message', 'color');
 
