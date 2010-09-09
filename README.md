@@ -115,3 +115,7 @@ It's probably easier just to look at protoirc.php, but here is the basic run dow
     });
 
     $output = $irc->wait($child); // $output contains above array
+
+    // Non-blocking version, read only if data is there
+    // $output will be false if no data was returned yet
+    $output = $irc->read($child);

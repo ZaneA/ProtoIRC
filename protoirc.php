@@ -192,6 +192,18 @@ class ProtoIRC {
                 return $pid;
         }
 
+        function read($pid) {
+                if (isset($this->child[$pid])) {
+                        if (!is_resource($this->child[$pid])) {
+                                $output = $this->child[$pid];
+                                unset($this->child[$pid]);
+                                return $output;
+                        }
+                }
+
+                return false;
+        }
+
         function wait($pid) {
                 if (isset($this->child[$pid])) {
                         pcntl_waitpid($pid, $status);
