@@ -7,8 +7,8 @@
 function ProtoIRC($conn_string, $conn_func = null) { return new ProtoIRC($conn_string, $conn_func); }
 
 class ProtoIRC {
-        var $host, $port, $nick, $last, $channels, $socket, $child;
-        var $handlers = array(), $bhandlers = array('stdin'), $ansi;
+        var $host, $port, $nick, $last, $channels, $socket, $child,
+            $handlers = array(), $bhandlers = array('stdin'), $ansi;
 
         function ProtoIRC($conn_string, $conn_func = null) {
                 // FIXME Yuck
