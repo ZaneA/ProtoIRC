@@ -11,13 +11,14 @@ class ProtoIRC {
             $handlers = array(), $bhandlers = array('stdin'), $ansi;
 
         function ProtoIRC($conn_string, $conn_func = null) {
-                // FIXME Yuck
-                $this->nick = parse_url($conn_string, PHP_URL_USER) ?: 'ProtoBot';
-                $this->host = parse_url($conn_string, PHP_URL_SCHEME) . parse_url($conn_string, PHP_URL_HOST) ?: '127.0.0.1';
-                $this->port = parse_url($conn_string, PHP_URL_PORT) ?: '6667';
-                $channels = trim(parse_url($conn_string, PHP_URL_PATH), '/');
-                $auth = parse_url($conn_string, PHP_URL_PASS);
-                $key = parse_url($conn_string, PHP_URL_FRAGMENT);
+                $url = (object)parse_url($conn_string);
+
+                @$this->nick = $url->user ?: 'ProtoBot';
+                @$this->host = $url->scheme . $url->host ?: '127.0.0.1';
+                @$this->port = $url->port ?: '6667';
+                @$channels = trim($url->path, '/');
+                @$auth = $url->pass;
+                @$key = $url->fragment;
 
                 foreach ($this->genIRCColors() as $color => $value)
                         $this->$color = $value;
@@ -29,7 +30,7 @@ class ProtoIRC {
                 if (!empty($channels)) {
                         $this->in(
                                 '/^.* (?:422|376)(?#builtincb)/',
-                                function ($irc) use ($conn_string, $channels, $auth, $key) {
+                                function ($irc) use ($channels, $auth, $key) {
                                         if ($auth)
                                                 $irc->send('NickServ', "IDENTIFY {$auth}");
 
