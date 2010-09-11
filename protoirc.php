@@ -87,23 +87,22 @@ class ProtoIRC {
 
 
         function genIRCColors() {
-                $irccolors = array_flip(explode(' ', '_white black blue green _red red purple yellow _yellow _green cyan _cyan _blue _purple _black white'));
+                $colors = array_flip(explode(' ', '_white black blue green _red red purple yellow _yellow _green cyan _cyan _blue _purple _black white'));
 
-                array_walk($irccolors, function ($value, $key) use (&$irccolors) {
-                        $irccolors[$key] = sprintf("\3%02s", $value);
-                });
+                foreach ($colors as &$v)
+                        $v = sprintf("\3%02s", $v);
 
-                return (object)($irccolors + array('default' => "\3"));
+                return (object)($colors + array('default' => "\3"));
         }
 
         function genANSIColors() {
                 $colors = array_flip(explode(' ', 'black red green yellow blue purple cyan white'));
-                foreach ($colors as $color => $key)
-                        $colors[$color] = "\033[0;" . (30 + $key) . "m";
+                foreach ($colors as &$v)
+                        $v = "\033[0;" . (30 + $v) . "m";
 
                 $bcolors = array_flip(explode(' ', '_black _red _green _yellow _blue _purple _cyan _white'));
-                foreach ($bcolors as $color => $key)
-                        $bcolors[$color] = "\033[1;" . (30 + $key) . "m";
+                foreach ($bcolors as &$v)
+                        $v = "\033[1;" . (30 + $v) . "m";
 
                 return (object)($colors + $bcolors + array('default' => "\033[0m"));
         }
