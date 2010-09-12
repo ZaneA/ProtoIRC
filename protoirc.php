@@ -10,7 +10,7 @@ class ProtoIRC {
         var $host, $port, $nick, $last, $channels, $socket, $child,
             $handlers = array(), $bhandlers = array('stdin'), $ansi;
 
-        function ProtoIRC($conn_string, $conn_func = null) {
+        function __construct($conn_string, $conn_func = null) {
                 $url = (object)parse_url($conn_string);
 
                 @$this->nick = $url->user ?: 'ProtoBot';
