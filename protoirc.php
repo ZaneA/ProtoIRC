@@ -50,7 +50,7 @@ class ProtoIRC {
                 );
 
                 $this->in(
-                        '/^:(.*?)!~.* PRIVMSG (.*) :(.*)(?#builtin)/',
+                        '/^:(.*?)!~.* PRIVMSG (.*?) :(.*)(?#builtin)/',
                         function ($irc, $nick, $dest, $msg) {
                                 $irc->last = ($dest == $irc->nick) ? $nick : $dest;
                                 $irc->msg($msg, $nick, $dest);
@@ -286,7 +286,9 @@ class ProtoIRC {
                         do {
                                 $r = array($this->socket, STDIN);
 
-                                if (stream_select($r, $w = null, $x = null, 1)) {
+                                $w = null;
+                                $x = null;
+                                if (stream_select($r, $w, $x, 1)) {
                                         foreach ($r as $stream) {
                                                 $buffer = trim(fgets($stream, 4096));
 
