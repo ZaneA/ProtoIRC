@@ -1,15 +1,62 @@
 <?php
-//
-// ProtoIRC framework
-// Author: Zane Ashby
-//
+/**
+ * ProtoIRC IRC bot framework.
+ *
+ * @author Zane Ashby <zane.a@demonastery.org>
+ */
 
-function ProtoIRC($conn_string, $conn_func = null) { return new ProtoIRC($conn_string, $conn_func); }
+/**
+ * ProtoIRC entry-point.
+ *
+ * @param string   $conn_string A string describing the connection to attempt.
+ * @param callable $conn_func An optional callback function that is called after the connection is ready.
+ *
+ * @return ProtoIRC A new instance of the ProtoIRC class, to allow easy chaining.
+ */
+function ProtoIRC($conn_string, $conn_func = null) {
+  return new ProtoIRC($conn_string, $conn_func);
+}
 
+/**
+ * ProtoIRC class.
+ */
 class ProtoIRC {
-  var $host, $port, $nick, $last, $channels, $socket, $child,
-    $handlers = array(), $bhandlers = array('stdin'), $ansi;
+  /** @var string Hostname of the IRC server. */
+  var $host;
 
+  /** @var int Port of the IRC server. */
+  var $port;
+
+  /** @var string Nickname. */
+  var $nick;
+
+  /** @var string Last destination that a message was sent to. Either a nickname or a channel. */
+  var $last;
+
+  /** @var array List of channels to connect to. */
+  var $channels;
+
+  /** @var resource IRC socket. */
+  var $socket;
+
+  /** @var array Array of child PID's and their return values (if any). */
+  var $child;
+
+  /** @var array Array of event handlers. */
+  var $handlers = array();
+
+  /** @var array Array of event handlers that should return early (on first match). */
+  var $bhandlers = array('stdin');
+
+  /** @var object Object containing color values. */
+  var $ansi;
+
+  /**
+   * Constructor.
+   *
+   * @param string   $conn_string A string describing the connection to attempt.
+   * @param callable $conn_func A callback function that is called after the connection is ready.
+   */
   function __construct($conn_string, $conn_func = null) {
     $url = (object)parse_url($conn_string);
 
@@ -85,7 +132,11 @@ class ProtoIRC {
     );
   }
 
-
+  /**
+   * Generate an object containing IRC colors.
+   *
+   * @return object An object with color names as keys.
+   */
   function genIRCColors() {
     $colors = array_flip(explode(' ', '_white black blue green _red red purple yellow _yellow _green cyan _cyan _blue _purple _black white'));
 
@@ -95,6 +146,11 @@ class ProtoIRC {
     return (object)($colors + array('default' => "\3"));
   }
 
+  /**
+   * Generate an object containing ANSI colors (for use on terminals).
+   *
+   * @return object An object with color names as keys.
+   */
   function genANSIColors() {
     $colors = array_flip(explode(' ', 'black red green yellow blue purple cyan white'));
     foreach ($colors as &$v)
@@ -107,11 +163,27 @@ class ProtoIRC {
     return (object)($colors + $bcolors + array('default' => "\033[0m"));
   }
 
+  /**
+   * Write a line to STDOUT.
+   *
+   * @param string Some text to output to STDOUT.
+   * @param string The name of a color to output this text in.
+   */
   function stdout($line, $color = 'default') {
     echo "{$this->ansi->$color}{$line}{$this->ansi->default}";
   }
 
-  // FIXME: This function is ugly
+  /**
+   * Send "stuff" to the IRC socket, in a few different ways.
+   *
+   * This method does different things depending on the number of arguments that it receives.
+   *
+   * @param string $data|$dest Either a valid string to send to an IRC server, or a destination.
+   * @param string $msg Message to send to destination. Optional if sending data directly.
+   * @param string $color Color to use for message. Optional.
+   *
+   * @return \ProtoIRC The instance.
+   */
   function send() {
     if (!$this->socket)
       return;
@@ -172,6 +244,16 @@ class ProtoIRC {
     return $this;
   }
 
+  /**
+   * Do something asynchronously.
+   *
+   * This neat little method sets up a UNIX socket for IPC, and then forks the current process.
+   * The child is then able to talk to the parent, by way of a return value.
+   *
+   * @param callable A callback that is running in the forked instance. Anything returned will be captured by the main process.
+   *
+   * @return int The PID of the child process, for keeping track of your children.
+   */
   function async($function) {
     socket_create_pair(AF_UNIX, SOCK_STREAM, 0, $sockets); // IPC
 
@@ -192,6 +274,13 @@ class ProtoIRC {
     return $pid;
   }
 
+  /**
+   * Read the value returned by a child process.
+   *
+   * @param int $pid The PID of the child process to read.
+   *
+   * @return mixed The stored value is returned if the child has exited, otherwise false. 
+   */
   function read($pid) {
     if (isset($this->child[$pid])) {
       if (!is_resource($this->child[$pid])) {
@@ -204,6 +293,17 @@ class ProtoIRC {
     return false;
   }
 
+  /**
+   * Wait for a child process to exit and return its value.
+   *
+   * Similar to the read function but will wait for the child to exit if necessary.
+   *
+   * @see \ProtoIRC::read()
+   *
+   * @param int The PID of the child process to read.
+   *
+   * @return mixed The returned value of the child process.
+   */
   function wait($pid) {
     if (isset($this->child[$pid])) {
       pcntl_waitpid($pid, $status);
@@ -221,6 +321,18 @@ class ProtoIRC {
     }
   }
 
+  /**
+   * Bind a callback to an event category, matched by regular expression.
+   *
+   * This is essentially a small event system used throughout the framework for dispatching methods.
+   * This can be thought of as "on". In fact it may end up being renamed to that effect.
+   *
+   * @param string   $type     The event category of event this is related to (such as "stdin", "out", and "in").
+   * @param string   $regex    A regular expression that is matched against the event.
+   * @param callable $function The callback that is called upon a successfull match.
+   *
+   * @return \ProtoIRC The instance.
+   */
   function bind($type, $regex, $function) {
     if (is_callable($function)) {
       foreach ((array)$regex as $_regex) {
@@ -237,6 +349,16 @@ class ProtoIRC {
     return $this;
   }
 
+  /**
+   * Magic method invoked when an unknown method is called.
+   *
+   * This is used as a shortcut for the event system (bind/call).
+   *
+   * @param string $type The event category, as seen in ProtoIRC::bind().
+   * @param array  $args The provided arguments.
+   *
+   * @return mixed Returns what the call/bind methods do.
+   */
   function __call($type, $args) {
     array_unshift($args, $type);
 
@@ -247,6 +369,18 @@ class ProtoIRC {
     }
   }
 
+  /**
+   * Call an event.
+   *
+   * This can be thought of as "emit". In fact it may end up being renamed to that effect.
+   *
+   * @param string $type The event category.
+   * @param string $data The data that is matched against regular expressions.
+   *
+   * @return mixed Returns different values based on the matches.
+   *   Of note, when there are no handlers registered for a type, this method will send to IRC directly.
+   *   For example, a call of `$protoirc->notice($data)` is transformed into an IRC NOTICE.
+   */
   function call($type, $data) {
     if (!isset($this->handlers[$type]))
       return $this->send(strtoupper($type) . " {$data}");
@@ -273,6 +407,11 @@ class ProtoIRC {
     return $this;
   }
 
+  /**
+   * Start the bot.
+   *
+   * This function handles connecting to IRC and acting as a mainloop.
+   */
   function go() {
     while (true) {
       if (!($this->socket = @fsockopen($this->host, $this->port)))
