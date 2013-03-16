@@ -58,14 +58,23 @@ class ProtoIRC {
    * @param callable $conn_func A callback function that is called after the connection is ready.
    */
   function __construct($conn_string, $conn_func = null) {
-    $url = (object)parse_url($conn_string);
+    $defaults = array(
+      'user' => 'ProtoBot',
+      'host' => '127.0.0.1',
+      'port' => '6667',
+      'path' => '',
+      'pass' => false,
+      'fragment' => '',
+    );
 
-    @$this->nick = $url->user ?: 'ProtoBot';
-    @$this->host = $url->scheme . $url->host ?: '127.0.0.1';
-    @$this->port = $url->port ?: '6667';
-    @$channels = trim($url->path, '/');
-    @$auth = $url->pass;
-    @$key = $url->fragment;
+    $url = (object)array_merge(parse_url($conn_string), $defaults);
+
+    $this->nick = $url->user;
+    $this->host = $url->host;
+    $this->port = $url->port;
+    $channels = trim($url->path, '/');
+    $auth = $url->pass;
+    $key = $url->fragment;
 
     foreach ($this->genIRCColors() as $color => $value)
       $this->$color = $value;
