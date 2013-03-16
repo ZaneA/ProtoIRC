@@ -1,0 +1,448 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project version="2.0.0a12" title="">
+  <file path="examples/github.php" hash="23f957f5fc4b7a6c19cce94e8525f1c2" package="Default">
+    <include line="10" type="Require" package="Default">
+      <name>../protoirc.php</name>
+    </include>
+    <parse_markers>
+      <error line="0" code="50007">No page-level DocBlock was found in file examples/github.php</error>
+    </parse_markers>
+  </file>
+  <file path="client.php" hash="28f44400d84a354076a9c8f871aebb7a" package="Default">
+    <include line="7" type="Require" package="Default">
+      <name>protoirc.php</name>
+    </include>
+    <include line="18" type="Include" package="Default">
+      <name/>
+    </include>
+    <parse_markers>
+      <error line="0" code="50007">No page-level DocBlock was found in file client.php</error>
+    </parse_markers>
+  </file>
+  <file path="addons/customactions.php" hash="e2a1e9c31ad70d18f6ae057b513bf618" package="Default">
+    <include line="31" type="Include" package="Default">
+      <name>lastRSS.php</name>
+    </include>
+    <parse_markers>
+      <error line="0" code="50007">No page-level DocBlock was found in file addons/customactions.php</error>
+    </parse_markers>
+  </file>
+  <file path="addons/prototyping.php" hash="a46fac5849fc62b6ab2c6077a5bdbf0c" package="Default">
+    <include line="48" type="Include" package="Default">
+      <name/>
+    </include>
+    <parse_markers>
+      <error line="0" code="50007">No page-level DocBlock was found in file addons/prototyping.php</error>
+    </parse_markers>
+  </file>
+  <file path="protoirc.php" hash="6293b5c389331cb34b046490ed7f0cda" package="Default">
+    <docblock line="2">
+      <description>ProtoIRC IRC bot framework.</description>
+      <long-description/>
+      <tag line="2" name="author" description="Zane Ashby &lt;zane.a@demonastery.org&gt;"/>
+    </docblock>
+    <function namespace="global" line="16" package="Default">
+      <name>ProtoIRC</name>
+      <full_name>\ProtoIRC</full_name>
+      <docblock line="8">
+        <description>ProtoIRC entry-point.</description>
+        <long-description/>
+        <tag line="8" name="param" description="A string describing the connection to attempt." type="string" variable="$conn_string">
+          <type by_reference="false">string</type>
+        </tag>
+        <tag line="8" name="param" description="An optional callback function that is called after the connection is ready." type="callable" variable="$conn_func">
+          <type by_reference="false">callable</type>
+        </tag>
+        <tag line="8" name="return" description="A new instance of the ProtoIRC class, to allow easy chaining." type="\ProtoIRC">
+          <type by_reference="false">\ProtoIRC</type>
+        </tag>
+      </docblock>
+      <argument line="16">
+        <name>$conn_string</name>
+        <default/>
+        <type/>
+      </argument>
+      <argument line="16">
+        <name>$conn_func</name>
+        <default>null</default>
+        <type/>
+      </argument>
+    </function>
+    <class final="false" abstract="false" namespace="global" line="23" package="Default">
+      <extends/>
+      <name>ProtoIRC</name>
+      <full_name>\ProtoIRC</full_name>
+      <docblock line="20">
+        <description>ProtoIRC class.</description>
+        <long-description/>
+      </docblock>
+      <property final="false" static="false" visibility="public" line="25" namespace="global" package="Default">
+        <name>$host</name>
+        <default/>
+        <docblock line="24">
+          <description/>
+          <long-description/>
+          <tag line="24" name="var" description="Hostname of the IRC server." type="string">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="public" line="28" namespace="global" package="Default">
+        <name>$port</name>
+        <default/>
+        <docblock line="27">
+          <description/>
+          <long-description/>
+          <tag line="27" name="var" description="Port of the IRC server." type="int">
+            <type by_reference="false">int</type>
+          </tag>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="public" line="31" namespace="global" package="Default">
+        <name>$nick</name>
+        <default/>
+        <docblock line="30">
+          <description/>
+          <long-description/>
+          <tag line="30" name="var" description="Nickname." type="string">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="public" line="34" namespace="global" package="Default">
+        <name>$last</name>
+        <default/>
+        <docblock line="33">
+          <description/>
+          <long-description/>
+          <tag line="33" name="var" description="Last destination that a message was sent to. Either a nickname or a channel." type="string">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="public" line="37" namespace="global" package="Default">
+        <name>$channels</name>
+        <default/>
+        <docblock line="36">
+          <description/>
+          <long-description/>
+          <tag line="36" name="var" description="List of channels to connect to." type="array">
+            <type by_reference="false">array</type>
+          </tag>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="public" line="40" namespace="global" package="Default">
+        <name>$socket</name>
+        <default/>
+        <docblock line="39">
+          <description/>
+          <long-description/>
+          <tag line="39" name="var" description="IRC socket." type="resource">
+            <type by_reference="false">resource</type>
+          </tag>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="public" line="43" namespace="global" package="Default">
+        <name>$child</name>
+        <default/>
+        <docblock line="42">
+          <description/>
+          <long-description/>
+          <tag line="42" name="var" description="Array of child PID's and their return values (if any)." type="array">
+            <type by_reference="false">array</type>
+          </tag>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="public" line="46" namespace="global" package="Default">
+        <name>$handlers</name>
+        <default>array()</default>
+        <docblock line="45">
+          <description/>
+          <long-description/>
+          <tag line="45" name="var" description="Array of event handlers." type="array">
+            <type by_reference="false">array</type>
+          </tag>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="public" line="49" namespace="global" package="Default">
+        <name>$bhandlers</name>
+        <default>array('stdin')</default>
+        <docblock line="48">
+          <description/>
+          <long-description/>
+          <tag line="48" name="var" description="Array of event handlers that should return early (on first match)." type="array">
+            <type by_reference="false">array</type>
+          </tag>
+        </docblock>
+      </property>
+      <property final="false" static="false" visibility="public" line="52" namespace="global" package="Default">
+        <name>$ansi</name>
+        <default/>
+        <docblock line="51">
+          <description/>
+          <long-description/>
+          <tag line="51" name="var" description="Object containing color values." type="object">
+            <type by_reference="false">object</type>
+          </tag>
+        </docblock>
+      </property>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="global" line="60" package="Default">
+        <name>__construct</name>
+        <full_name>__construct</full_name>
+        <docblock line="54">
+          <description>Constructor.</description>
+          <long-description/>
+          <tag line="54" name="param" description="A string describing the connection to attempt." type="string" variable="$conn_string">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="54" name="param" description="A callback function that is called after the connection is ready." type="callable" variable="$conn_func">
+            <type by_reference="false">callable</type>
+          </tag>
+        </docblock>
+        <argument line="60">
+          <name>$conn_string</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="60">
+          <name>$conn_func</name>
+          <default>null</default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="global" line="140" package="Default">
+        <name>genIRCColors</name>
+        <full_name>genIRCColors</full_name>
+        <docblock line="135">
+          <description>Generate an object containing IRC colors.</description>
+          <long-description/>
+          <tag line="135" name="return" description="An object with color names as keys." type="object">
+            <type by_reference="false">object</type>
+          </tag>
+        </docblock>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="global" line="154" package="Default">
+        <name>genANSIColors</name>
+        <full_name>genANSIColors</full_name>
+        <docblock line="149">
+          <description>Generate an object containing ANSI colors (for use on terminals).</description>
+          <long-description/>
+          <tag line="149" name="return" description="An object with color names as keys." type="object">
+            <type by_reference="false">object</type>
+          </tag>
+        </docblock>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="global" line="172" package="Default">
+        <name>stdout</name>
+        <full_name>stdout</full_name>
+        <docblock line="166">
+          <description>Write a line to STDOUT.</description>
+          <long-description/>
+          <tag line="166" name="param" description="Some text to output to STDOUT." type="string" variable="$line">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="166" name="param" description="The name of a color to output this text in." type="string" variable="$color">
+            <type by_reference="false">string</type>
+          </tag>
+        </docblock>
+        <argument line="172">
+          <name>$line</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="172">
+          <name>$color</name>
+          <default>'default'</default>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="global" line="187" package="Default">
+        <name>send</name>
+        <full_name>send</full_name>
+        <docblock line="176">
+          <description>Send "stuff" to the IRC socket, in a few different ways.</description>
+          <long-description>&lt;p&gt;This method does different things depending on the number of arguments that it receives.&lt;/p&gt;</long-description>
+          <tag line="176" name="param" description="Either a valid string to send to an IRC server, or a destination." type="string" variable="$data|$dest">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="176" name="param" description="Message to send to destination. Optional if sending data directly." type="string" variable="$msg">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="176" name="param" description="Color to use for message. Optional." type="string" variable="$color">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="176" name="return" description="The instance." type="\ProtoIRC">
+            <type by_reference="false">\ProtoIRC</type>
+          </tag>
+        </docblock>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="global" line="257" package="Default">
+        <name>async</name>
+        <full_name>async</full_name>
+        <docblock line="247">
+          <description>Do something asynchronously.</description>
+          <long-description>&lt;p&gt;This neat little method sets up a UNIX socket for IPC, and then forks the current process.
+The child is then able to talk to the parent, by way of a return value.&lt;/p&gt;</long-description>
+          <tag line="247" name="param" description="A callback that is running in the forked instance. Anything returned will be captured by the main process." type="callable" variable="$function">
+            <type by_reference="false">callable</type>
+          </tag>
+          <tag line="247" name="return" description="The PID of the child process, for keeping track of your children." type="int">
+            <type by_reference="false">int</type>
+          </tag>
+        </docblock>
+        <argument line="257">
+          <name>$function</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="global" line="284" package="Default">
+        <name>read</name>
+        <full_name>read</full_name>
+        <docblock line="277">
+          <description>Read the value returned by a child process.</description>
+          <long-description/>
+          <tag line="277" name="param" description="The PID of the child process to read." type="int" variable="$pid">
+            <type by_reference="false">int</type>
+          </tag>
+          <tag line="277" name="return" description="The stored value is returned if the child has exited, otherwise false." type="mixed">
+            <type by_reference="false">mixed</type>
+          </tag>
+        </docblock>
+        <argument line="284">
+          <name>$pid</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="global" line="307" package="Default">
+        <name>wait</name>
+        <full_name>wait</full_name>
+        <docblock line="296">
+          <description>Wait for a child process to exit and return its value.</description>
+          <long-description>&lt;p&gt;Similar to the read function but will wait for the child to exit if necessary.&lt;/p&gt;</long-description>
+          <tag line="296" name="see" description="\ProtoIRC::read()" refers="\ProtoIRC::read()"/>
+          <tag line="296" name="param" description="The PID of the child process to read." type="int" variable="$pid">
+            <type by_reference="false">int</type>
+          </tag>
+          <tag line="296" name="return" description="The returned value of the child process." type="mixed">
+            <type by_reference="false">mixed</type>
+          </tag>
+        </docblock>
+        <argument line="307">
+          <name>$pid</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="global" line="336" package="Default">
+        <name>bind</name>
+        <full_name>bind</full_name>
+        <docblock line="324">
+          <description>Bind a callback to an event category, matched by regular expression.</description>
+          <long-description>&lt;p&gt;This is essentially a small event system used throughout the framework for dispatching methods.
+This can be thought of as "on". In fact it may end up being renamed to that effect.&lt;/p&gt;</long-description>
+          <tag line="324" name="param" description="The event category of event this is related to (such as &quot;stdin&quot;, &quot;out&quot;, and &quot;in&quot;)." type="string" variable="$type">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="324" name="param" description="A regular expression that is matched against the event." type="string" variable="$regex">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="324" name="param" description="The callback that is called upon a successfull match." type="callable" variable="$function">
+            <type by_reference="false">callable</type>
+          </tag>
+          <tag line="324" name="return" description="The instance." type="\ProtoIRC">
+            <type by_reference="false">\ProtoIRC</type>
+          </tag>
+        </docblock>
+        <argument line="336">
+          <name>$type</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="336">
+          <name>$regex</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="336">
+          <name>$function</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="global" line="362" package="Default">
+        <name>__call</name>
+        <full_name>__call</full_name>
+        <docblock line="352">
+          <description>Magic method invoked when an unknown method is called.</description>
+          <long-description>&lt;p&gt;This is used as a shortcut for the event system (bind/call).&lt;/p&gt;</long-description>
+          <tag line="352" name="param" description="The event category, as seen in ProtoIRC::bind()." type="string" variable="$type">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="352" name="param" description="The provided arguments." type="array" variable="$args">
+            <type by_reference="false">array</type>
+          </tag>
+          <tag line="352" name="return" description="Returns what the call/bind methods do." type="mixed">
+            <type by_reference="false">mixed</type>
+          </tag>
+        </docblock>
+        <argument line="362">
+          <name>$type</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="362">
+          <name>$args</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="global" line="384" package="Default">
+        <name>call</name>
+        <full_name>call</full_name>
+        <docblock line="372">
+          <description>Call an event.</description>
+          <long-description>&lt;p&gt;This can be thought of as "emit". In fact it may end up being renamed to that effect.&lt;/p&gt;</long-description>
+          <tag line="372" name="param" description="The event category." type="string" variable="$type">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="372" name="param" description="The data that is matched against regular expressions." type="string" variable="$data">
+            <type by_reference="false">string</type>
+          </tag>
+          <tag line="372" name="return" description="Returns different values based on the matches.&#10;  Of note, when there are no handlers registered for a type, this method will send to IRC directly.&#10;  For example, a call of `$protoirc-&gt;notice($data)` is transformed into an IRC NOTICE." type="mixed">
+            <type by_reference="false">mixed</type>
+          </tag>
+        </docblock>
+        <argument line="384">
+          <name>$type</name>
+          <default/>
+          <type/>
+        </argument>
+        <argument line="384">
+          <name>$data</name>
+          <default/>
+          <type/>
+        </argument>
+      </method>
+      <method final="false" abstract="false" static="false" visibility="public" namespace="global" line="415" package="Default">
+        <name>go</name>
+        <full_name>go</full_name>
+        <docblock line="410">
+          <description>Start the bot.</description>
+          <long-description>&lt;p&gt;This function handles connecting to IRC and acting as a mainloop.&lt;/p&gt;</long-description>
+        </docblock>
+      </method>
+    </class>
+    <parse_markers>
+      <notice line="176" code="50013">Parameter $data|$dest could not be found in send()</notice>
+      <notice line="176" code="50013">Parameter $msg could not be found in send()</notice>
+      <notice line="176" code="50013">Parameter $color could not be found in send()</notice>
+    </parse_markers>
+  </file>
+  <package name="Default" full_name="Default"/>
+  <namespace name="global" full_name="global"/>
+  <marker count="0">todo</marker>
+  <marker count="0">fixme</marker>
+  <deprecated count="0"/>
+</project>
