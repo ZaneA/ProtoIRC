@@ -8,13 +8,13 @@ $saved_handlers = array();
 $filename = '';
 
 $irc->stdin('/^\/(proto|new)/', function ($irc, $cmd) {
-        global $filename, $saved_handlers;
+  global $filename, $saved_handlers;
 
-        $filename = tempnam('/tmp', 'proto');
+  $filename = tempnam('/tmp', 'proto');
 
-        // Below is some example code that will be written to the file
-        // before it is opened in your editor
-        $prototype = <<<'PROTO'
+  // Below is some example code that will be written to the file
+  // before it is opened in your editor
+  $prototype = <<<'PROTO'
 #!/usr/bin/php
 <?php
 $irc->in('/^:(.*)!.* PRIVMSG (.*) :!echo (.*)/', function ($irc, $nick, $channel, $args) {
@@ -22,60 +22,60 @@ $irc->in('/^:(.*)!.* PRIVMSG (.*) :!echo (.*)/', function ($irc, $nick, $channel
 });
 PROTO;
 
-        file_put_contents($filename, $prototype);
+  file_put_contents($filename, $prototype);
 
-        pclose(popen('/bin/sh -c "$EDITOR '.$filename.' &"', 'r'));
+  pclose(popen('/bin/sh -c "$EDITOR '.$filename.' &"', 'r'));
 
-        $filem = filemtime($filename);
+  $filem = filemtime($filename);
 
-        $irc->timer(5, function ($irc) use (&$filem) {
-                global $filename, $saved_handlers;
+  $irc->timer(5, function ($irc) use (&$filem) {
+    global $filename, $saved_handlers;
 
-                clearstatcache(true, $filename);
+    clearstatcache(true, $filename);
 
-                if (filemtime($filename) != $filem) {
-                        $filem = filemtime($filename);
+    if (filemtime($filename) != $filem) {
+      $filem = filemtime($filename);
 
-                        $irc->handlers = $saved_handlers;
+      $irc->handlers = $saved_handlers;
 
-                        // PHP lint to check the include file for correctness before loading it
-                        // Hopefully this will prevent the bot from bombing on errors
-                        exec("php -l {$filename}", $output = array(), $returncode);
+      // PHP lint to check the include file for correctness before loading it
+      // Hopefully this will prevent the bot from bombing on errors
+      exec("php -l {$filename}", $output = array(), $returncode);
 
-                        if ($returncode == 0) {
-                                ob_start();
+      if ($returncode == 0) {
+        ob_start();
 
-                                include($filename);
+        include($filename);
 
-                                ob_end_clean();
-                                $irc->stdout("Reloaded {$filename}\n", '_green');
-                        } else {
-                                $irc->stdout("Errors were found in {$filename}\n", '_red');
-                        }
-                }
-        });
+        ob_end_clean();
+        $irc->stdout("Reloaded {$filename}\n", '_green');
+      } else {
+        $irc->stdout("Errors were found in {$filename}\n", '_red');
+      }
+    }
+  });
 
-        $saved_handlers = $irc->handlers;
+  $saved_handlers = $irc->handlers;
 });
 
 $irc->stdin('/^\/save (.*)/', function ($irc, $newfilename) {
-        global $filename;
+  global $filename;
 
-        if (!empty($filename)) {
-                $irc->timer(5, null); // unset timer
+  if (!empty($filename)) {
+    $irc->timer(5, null); // unset timer
 
-                rename($filename, 'addons/'.$newfilename.'.php');
+    rename($filename, 'addons/'.$newfilename.'.php');
 
-                $irc->stdout("Moved {$filename} to addons/{$newfilename}.php\n", '_green');
+    $irc->stdout("Moved {$filename} to addons/{$newfilename}.php\n", '_green');
 
-                $filename = '';
-        }
+    $filename = '';
+  }
 });
 
 $irc->stdin('/^\/php (.*)/', function ($irc, $code) {
-        if (@eval("return true; {$code}")) {
-                eval($code);
-        } else {
-                $irc->stdout("Error in eval'd code\n", '_red');
-        }
+  if (@eval("return true; {$code}")) {
+    eval($code);
+  } else {
+    $irc->stdout("Error in eval'd code\n", '_red');
+  }
 });
