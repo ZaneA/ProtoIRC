@@ -126,4 +126,4 @@ $output = $irc->read($child);
 Documentation
 ---
 
-Documentation is available on [GitHub pages](https://zanea.github.com/ProtoIRC/).
+Documentation is available on [GitHub pages](http://zanea.github.com/ProtoIRC/).
