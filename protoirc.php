@@ -67,7 +67,7 @@ class ProtoIRC {
       'fragment' => '',
     );
 
-    $url = (object)array_merge(parse_url($conn_string), $defaults);
+    $url = (object)array_merge($defaults, parse_url($conn_string));
 
     $this->nick = $url->user;
     $this->host = $url->host;
@@ -106,7 +106,7 @@ class ProtoIRC {
     );
 
     $this->in(
-      '/^:(.*?)!~.* PRIVMSG (.*?) :(.*)(?#builtin)/',
+      '/^:(.*?)!~?.* PRIVMSG (.*?) :(.*)(?#builtin)/',
       function ($irc, $nick, $dest, $msg) {
         $irc->last = ($dest == $irc->nick) ? $nick : $dest;
         $irc->msg($msg, $nick, $dest);
@@ -114,7 +114,7 @@ class ProtoIRC {
     );
 
     $this->in(
-      '/^:(.*?)!~.*? JOIN :(.*)(?#builtin)/',
+      '/^:(.*?)!~?.*? JOIN :(.*)(?#builtin)/',
       function ($irc, $nick, $channel) {
         if ($nick == $irc->nick)
           $irc->channels[] = $channel;
@@ -122,7 +122,7 @@ class ProtoIRC {
     );
 
     $this->in(
-      '/^:(.*?)!~.*? PART (.*)(?#builtin)/',
+      '/^:(.*?)!~?.*? PART (.*)(?#builtin)/',
       function ($irc, $nick, $channel) {
         if ($nick == $irc->nick && ($key = array_search($channel, $irc->channels)) !== false)
           unset($irc->channels[$key]);
